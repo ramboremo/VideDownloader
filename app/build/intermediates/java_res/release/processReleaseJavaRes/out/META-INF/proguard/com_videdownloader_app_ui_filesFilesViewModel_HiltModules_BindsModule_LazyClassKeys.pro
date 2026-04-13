@@ -1,3 +1,0 @@
--keep,allowobfuscation,allowshrinking class com.videdownloader.app.ui.browser.BrowserViewModel
--keep,allowobfuscation,allowshrinking class com.videdownloader.app.ui.browser.BrowserViewModel
--keep,allowobfuscation,allowshrinking class com.videdownloader.app.ui.files.FilesViewModel

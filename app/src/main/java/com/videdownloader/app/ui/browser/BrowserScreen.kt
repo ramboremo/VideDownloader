@@ -588,12 +588,11 @@ fun WebViewContent(
                     (parent as ViewGroup).removeView(this)
                 }
                 
-                // Only setup once
-                if (url == null) {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
+                // Setup layout and settings
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
 
                 settings.apply {
                     javaScriptEnabled = true
@@ -699,7 +698,6 @@ fun WebViewContent(
                         title?.let { viewModel.onTitleChanged(it) }
                     }
                 }
-                } // End of if (url == null)
 
                 onWebViewCreated(this)
             }
