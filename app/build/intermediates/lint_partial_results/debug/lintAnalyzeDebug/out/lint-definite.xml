@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.7.3" type="incidents">
+
+    <incident
+        id="OldTargetApi"
+        severity="warning"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details.">
+        <fix-replace
+            description="Update targetSdkVersion to 36"
+            oldString="35"
+            replacement="36"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="16"
+            column="9"
+            startOffset="376"
+            endLine="16"
+            endColumn="23"
+            endOffset="390"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.core:core-ktx than 1.15.0 is available: 1.18.0">
+        <fix-replace
+            description="Change to 1.18.0"
+            family="Update versions"
+            oldString="1.15.0"
+            replacement="1.18.0"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="50"
+            column="20"
+            startOffset="1098"
+            endLine="50"
+            endColumn="51"
+            endOffset="1129"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.lifecycle:lifecycle-runtime-ktx than 2.8.7 is available: 2.10.0">
+        <fix-replace
+            description="Change to 2.10.0"
+            family="Update versions"
+            oldString="2.8.7"
+            replacement="2.10.0"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="51"
+            column="20"
+            startOffset="1150"
+            endLine="51"
+            endColumn="68"
+            endOffset="1198"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.lifecycle:lifecycle-viewmodel-compose than 2.8.7 is available: 2.10.0">
+        <fix-replace
+            description="Change to 2.10.0"
+            family="Update versions"
+            oldString="2.8.7"
+            replacement="2.10.0"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="52"
+            column="20"
+            startOffset="1219"
+            endLine="52"
+            endColumn="74"
+            endOffset="1273"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.activity:activity-compose than 1.9.3 is available: 1.13.0">
+        <fix-replace
+            description="Change to 1.13.0"
+            family="Update versions"
+            oldString="1.9.3"
+            replacement="1.13.0"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="53"
+            column="20"
+            startOffset="1294"
+            endLine="53"
+            endColumn="62"
+            endOffset="1336"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.compose:compose-bom than 2024.12.01 is available: 2026.03.01">
+        <fix-replace
+            description="Change to 2026.03.01"
+            family="Update versions"
+            oldString="2024.12.01"
+            replacement="2026.03.01"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="56"
+            column="20"
+            startOffset="1373"
+            endLine="56"
+            endColumn="71"
+            endOffset="1424"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.navigation:navigation-compose than 2.8.5 is available: 2.9.7">
+        <fix-replace
+            description="Change to 2.9.7"
+            family="Update versions"
+            oldString="2.8.5"
+            replacement="2.9.7"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="64"
+            column="20"
+            startOffset="1755"
+            endLine="64"
+            endColumn="66"
+            endOffset="1801"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.hilt:hilt-navigation-compose than 1.2.0 is available: 1.3.0">
+        <fix-replace
+            description="Change to 1.3.0"
+            family="Update versions"
+            oldString="1.2.0"
+            replacement="1.3.0"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="69"
+            column="20"
+            startOffset="1953"
+            endLine="69"
+            endColumn="65"
+            endOffset="1998"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.room:room-runtime than 2.6.1 is available: 2.8.4">
+        <fix-replace
+            description="Change to 2.8.4"
+            family="Update versions"
+            oldString="2.6.1"
+            replacement="2.8.4"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="72"
+            column="20"
+            startOffset="2032"
+            endLine="72"
+            endColumn="54"
+            endOffset="2066"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.room:room-ktx than 2.6.1 is available: 2.8.4">
+        <fix-replace
+            description="Change to 2.8.4"
+            family="Update versions"
+            oldString="2.6.1"
+            replacement="2.8.4"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="73"
+            column="20"
+            startOffset="2087"
+            endLine="73"
+            endColumn="50"
+            endOffset="2117"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.room:room-compiler than 2.6.1 is available: 2.8.4">
+        <fix-replace
+            description="Change to 2.8.4"
+            family="Update versions"
+            oldString="2.6.1"
+            replacement="2.8.4"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="74"
+            column="9"
+            startOffset="2127"
+            endLine="74"
+            endColumn="44"
+            endOffset="2162"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.datastore:datastore-preferences than 1.1.1 is available: 1.2.1">
+        <fix-replace
+            description="Change to 1.2.1"
+            family="Update versions"
+            oldString="1.1.1"
+            replacement="1.2.1"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="77"
+            column="20"
+            startOffset="2201"
+            endLine="77"
+            endColumn="68"
+            endOffset="2249"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of com.google.android.gms:play-services-ads than 23.0.0 is available: 25.2.0">
+        <fix-replace
+            description="Change to 25.2.0"
+            family="Update versions"
+            oldString="23.0.0"
+            replacement="25.2.0"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="87"
+            column="20"
+            startOffset="2489"
+            endLine="87"
+            endColumn="69"
+            endOffset="2538"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.webkit:webkit than 1.12.1 is available: 1.15.0">
+        <fix-replace
+            description="Change to 1.15.0"
+            family="Update versions"
+            oldString="1.12.1"
+            replacement="1.15.0"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="90"
+            column="20"
+            startOffset="2574"
+            endLine="90"
+            endColumn="51"
+            endOffset="2605"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.test.ext:junit than 1.2.1 is available: 1.3.0">
+        <fix-replace
+            description="Change to 1.3.0"
+            family="Update versions"
+            oldString="1.2.1"
+            replacement="1.3.0"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="97"
+            column="31"
+            startOffset="2766"
+            endLine="97"
+            endColumn="62"
+            endOffset="2797"/>
+    </incident>
+
+    <incident
+        id="GradleDependency"
+        severity="warning"
+        message="A newer version of androidx.compose:compose-bom than 2024.12.01 is available: 2026.03.01">
+        <fix-replace
+            description="Change to 2026.03.01"
+            family="Update versions"
+            oldString="2024.12.01"
+            replacement="2026.03.01"
+            priority="0"/>
+        <location
+            file="${:app*projectDir}/build.gradle.kts"
+            line="98"
+            column="31"
+            startOffset="2829"
+            endLine="98"
+            endColumn="82"
+            endOffset="2880"/>
+    </incident>
+
+    <incident
+        id="InsecureBaseConfiguration"
+        severity="warning"
+        message="Insecure Base Configuration">
+        <fix-replace
+            description="Replace with false"
+            replacement="false"
+            priority="0">
+            <range
+                file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/xml/network_security_config.xml"
+                startOffset="109"
+                endOffset="113"/>
+        </fix-replace>
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/xml/network_security_config.xml"
+            line="3"
+            column="45"
+            startOffset="109"
+            endLine="3"
+            endColumn="49"
+            endOffset="113"/>
+    </incident>
+
+    <incident
+        id="ObsoleteSdkInt"
+        severity="warning"
+        message="Unnecessary; SDK_INT is always >= 24">
+        <fix-data conditional="true"/>
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/com/videdownloader/app/service/DownloadService.kt"
+            line="134"
+            column="13"
+            startOffset="5155"
+            endLine="134"
+            endColumn="59"
+            endOffset="5201"/>
+    </incident>
+
+    <incident
+        id="MonochromeLauncherIcon"
+        severity="warning"
+        message="The application adaptive icon is missing a monochrome tag">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/mipmap-anydpi-v26/ic_launcher.xml"
+            line="2"
+            column="1"
+            startOffset="39"
+            endLine="5"
+            endColumn="17"
+            endOffset="267"/>
+    </incident>
+
+    <incident
+        id="MonochromeLauncherIcon"
+        severity="warning"
+        message="The application adaptive roundIcon is missing a monochrome tag">
+        <location
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/mipmap-anydpi-v26/ic_launcher_round.xml"
+            line="2"
+            column="1"
+            startOffset="39"
+            endLine="5"
+            endColumn="17"
+            endOffset="267"/>
+    </incident>
+
+</incidents>

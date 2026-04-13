@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.videdownloader.app-mergeReleaseResources-72:/values-v23/values-v23.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\bhara\\.gradle\\caches\\8.11.1\\transforms\\3bc09e431ec4fdd20b3f41a6923b851d\\transformed\\work-runtime-2.7.0\\res\\values-v23\\values-v23.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,121",
+                        "endColumns": "65,62",
+                        "endOffsets": "116,179"
+                    }
+                }
+            ]
+        }
+    ]
+}
