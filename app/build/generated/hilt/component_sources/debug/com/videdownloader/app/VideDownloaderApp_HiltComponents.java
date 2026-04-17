@@ -4,6 +4,7 @@ import com.videdownloader.app.di.AppModule;
 import com.videdownloader.app.service.DownloadService_GeneratedInjector;
 import com.videdownloader.app.ui.browser.BrowserViewModel_HiltModules;
 import com.videdownloader.app.ui.files.FilesViewModel_HiltModules;
+import com.videdownloader.app.ui.player.PlayerViewModel_HiltModules;
 import com.videdownloader.app.ui.settings.SettingsViewModel_HiltModules;
 import dagger.Binds;
 import dagger.Component;
@@ -161,6 +162,7 @@ public final class VideDownloaderApp_HiltComponents {
           FilesViewModel_HiltModules.KeyModule.class,
           HiltWrapper_ActivityRetainedComponentManager_LifecycleModule.class,
           HiltWrapper_SavedStateHandleModule.class,
+          PlayerViewModel_HiltModules.KeyModule.class,
           SettingsViewModel_HiltModules.KeyModule.class,
           ActivityCBuilderModule.class,
           ViewModelCBuilderModule.class
@@ -202,6 +204,7 @@ public final class VideDownloaderApp_HiltComponents {
           BrowserViewModel_HiltModules.BindsModule.class,
           FilesViewModel_HiltModules.BindsModule.class,
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
+          PlayerViewModel_HiltModules.BindsModule.class,
           SettingsViewModel_HiltModules.BindsModule.class
       }
   )

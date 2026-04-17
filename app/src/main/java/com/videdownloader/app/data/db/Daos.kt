@@ -5,11 +5,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DownloadDao {
-    @Query("SELECT * FROM downloads ORDER BY createdAt DESC")
-    fun getAllDownloads(): Flow<List<DownloadEntity>>
+    @Query("SELECT * FROM downloads WHERE isPrivate = :isPrivate ORDER BY createdAt DESC")
+    fun getAllDownloads(isPrivate: Boolean = false): Flow<List<DownloadEntity>>
 
-    @Query("SELECT * FROM downloads WHERE status = :status ORDER BY createdAt DESC")
-    fun getDownloadsByStatus(status: String): Flow<List<DownloadEntity>>
+    @Query("SELECT * FROM downloads WHERE status = :status AND isPrivate = :isPrivate ORDER BY createdAt DESC")
+    fun getDownloadsByStatus(status: String, isPrivate: Boolean = false): Flow<List<DownloadEntity>>
 
     @Query("SELECT * FROM downloads WHERE id = :id")
     suspend fun getDownloadById(id: String): DownloadEntity?
@@ -53,11 +53,23 @@ interface BookmarkDao {
 
 @Dao
 interface HistoryDao {
-    @Query("SELECT * FROM history ORDER BY visitedAt DESC LIMIT 100")
-    fun getRecentHistory(): Flow<List<HistoryEntity>>
+    @Query("SELECT * FROM history ORDER BY visitedAt DESC")
+    fun getAllHistory(): Flow<List<HistoryEntity>>
+
+    @Query("SELECT * FROM history WHERE url LIKE '%' || :query || '%' OR title LIKE '%' || :query || '%' ORDER BY visitedAt DESC")
+    fun searchHistory(query: String): Flow<List<HistoryEntity>>
 
     @Insert
     suspend fun insertHistory(history: HistoryEntity)
+
+    @Query("DELETE FROM history WHERE id = :id")
+    suspend fun deleteHistoryById(id: Long)
+
+    @Query("DELETE FROM history WHERE visitedAt < :timestamp")
+    suspend fun deleteHistoryBefore(timestamp: Long)
+
+    @Query("DELETE FROM history WHERE visitedAt >= :timestamp")
+    suspend fun deleteHistorySince(timestamp: Long)
 
     @Query("DELETE FROM history")
     suspend fun clearHistory()

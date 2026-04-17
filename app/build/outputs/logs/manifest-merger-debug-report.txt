@@ -1,12 +1,20 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-53:12
-INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-53:12
-INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-53:12
-INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-53:12
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-62:12
+INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-62:12
+INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-62:12
+INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-62:12
 MERGED from [io.coil-kt:coil-video:2.7.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\65e627df457b2c53ab256bbf19b1618c\transformed\coil-video-2.7.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.gms:play-services-ads:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4e855dab95ce8b9ac963f38a35b16edb\transformed\play-services-ads-23.0.0\AndroidManifest.xml:17:1-25:12
 MERGED from [androidx.webkit:webkit:1.12.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\27aae379c1ac066fb4fd0f424ed95fea\transformed\webkit-1.12.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.media3:media3-ui:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2c6a0f5eeb506ec2581ed6c00ce3d8de\transformed\media3-ui-1.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-extractor:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\18d86da366b58208ea8e9ec9103752a7\transformed\media3-extractor-1.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-container:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ec150bdf0dea6fb8522140a4ecc33da5\transformed\media3-container-1.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-datasource:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8cf1aa39595b32125ee5927590d7dd8a\transformed\media3-datasource-1.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-decoder:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\aca1b78aa8c28cb70281e834d703d3bd\transformed\media3-decoder-1.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-database:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\62b15934f738bb611cc1d0e9ac876a4f\transformed\media3-database-1.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.media3:media3-common:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\bcc1effd0dc48a35bf859ae6bffe38f4\transformed\media3-common-1.2.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.media3:media3-exoplayer:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b9944551d1e3d11ab8b9b2f510a9d67c\transformed\media3-exoplayer-1.2.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.browser:browser:1.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\c344b49ae424907fd6ce71626c16cc99\transformed\browser-1.4.0\AndroidManifest.xml:17:1-24:12
 MERGED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:17:1-95:12
 MERGED from [com.google.android.gms:play-services-ads-base:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7345d3c2fafd69aa1b84acf9c8b42401\transformed\play-services-ads-base-23.0.0\AndroidManifest.xml:2:1-9:12
@@ -18,6 +26,8 @@ MERGED from [com.google.android.gms:play-services-measurement-sdk-api:20.1.2] C:
 MERGED from [com.google.android.ump:user-messaging-platform:2.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ace84a6ff0e7c7dcbd1b7da867cbc16\transformed\user-messaging-platform-2.2.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.gms:play-services-measurement-base:20.1.2] C:\Users\bhara\.gradle\caches\8.11.1\transforms\0d62a4cb0f5792c310348bd9d70cc115\transformed\play-services-measurement-base-20.1.2\AndroidManifest.xml:2:1-9:12
 MERGED from [com.google.android.gms:play-services-basement:18.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ae9f82fe7d3f6b6d7ba41d3f03f3e5e9\transformed\play-services-basement-18.2.0\AndroidManifest.xml:16:1-26:12
+MERGED from [androidx.media:media:1.6.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4f40f7b7e8389ff0a5e7e7dc20179d52\transformed\media-1.6.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.recyclerview:recyclerview:1.3.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\1ce06d0c591892bdc1561b72ec6bdd05\transformed\recyclerview-1.3.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.hilt:hilt-navigation-compose:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7a475ffacd2cbb6766842642e5af4c53\transformed\hilt-navigation-compose-1.2.0\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.hilt:hilt-navigation:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ae56020b67b74a94c3de0dec190ef56c\transformed\hilt-navigation-1.2.0\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.navigation:navigation-common:2.8.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\fa14891804f357bfad57d48fc5815e08\transformed\navigation-common-2.8.5\AndroidManifest.xml:17:1-22:12
@@ -74,9 +84,9 @@ MERGED from [androidx.compose.material:material-icons-core-android:1.7.6] C:\Use
 MERGED from [androidx.compose.ui:ui-android:1.7.6] C:\Users\bhara\.gradle\caches\8.11.1\transforms\e8c0caaf21a0a350ad4327e418f78ea1\transformed\ui-release\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\741dce5374c6d8362af524f6a6e357e0\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\79aecf26eb65c27049219a394fb8e46a\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\12fa7458c0ee4c29bf4ff1be00060290\transformed\customview-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\0dd1eeb0071ed8c033b13688a2c294a1\transformed\autofill-1.0.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.graphics:graphics-path:1.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ec73634c98084706d95a7439b4ce9ca6\transformed\graphics-path-1.0.1\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.customview:customview:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\12fa7458c0ee4c29bf4ff1be00060290\transformed\customview-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8c782bb174245efeba84ed647adeeff0\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\426af444410ebd1b0e20893c2e415c34\transformed\vectordrawable-1.1.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:17:1-30:12
@@ -122,6 +132,10 @@ MERGED from [com.google.android.gms:play-services-measurement-sdk-api:20.1.2] C:
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:5:22-64
 uses-permission#android.permission.ACCESS_NETWORK_STATE
 ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:6:5-79
+MERGED from [androidx.media3:media3-common:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\bcc1effd0dc48a35bf859ae6bffe38f4\transformed\media3-common-1.2.0\AndroidManifest.xml:22:5-79
+MERGED from [androidx.media3:media3-common:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\bcc1effd0dc48a35bf859ae6bffe38f4\transformed\media3-common-1.2.0\AndroidManifest.xml:22:5-79
+MERGED from [androidx.media3:media3-exoplayer:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b9944551d1e3d11ab8b9b2f510a9d67c\transformed\media3-exoplayer-1.2.0\AndroidManifest.xml:22:5-79
+MERGED from [androidx.media3:media3-exoplayer:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b9944551d1e3d11ab8b9b2f510a9d67c\transformed\media3-exoplayer-1.2.0\AndroidManifest.xml:22:5-79
 MERGED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:25:5-79
 MERGED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:25:5-79
 MERGED from [com.google.android.gms:play-services-measurement-sdk-api:20.1.2] C:\Users\bhara\.gradle\caches\8.11.1\transforms\24b3844ada756d2bb0bc8fb23a85c2f4\transformed\play-services-measurement-sdk-api-20.1.2\AndroidManifest.xml:24:5-79
@@ -171,8 +185,8 @@ ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.
 	android:name
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:17:22-74
 application
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:19:5-51:19
-INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:19:5-51:19
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:19:5-60:19
+INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:19:5-60:19
 MERGED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:53:5-93:19
 MERGED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:53:5-93:19
 MERGED from [com.google.android.gms:play-services-ads-base:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7345d3c2fafd69aa1b84acf9c8b42401\transformed\play-services-ads-base-23.0.0\AndroidManifest.xml:7:5-20
@@ -240,7 +254,7 @@ ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.
 	android:name
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:32:13-69
 activity#com.videdownloader.app.MainActivity
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:35:9-45:20
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:35:9-54:20
 	android:launchMode
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:38:13-44
 	android:windowSoftInputMode
@@ -261,14 +275,32 @@ category#android.intent.category.LAUNCHER
 ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:43:17-77
 	android:name
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:43:27-74
-service#com.videdownloader.app.service.DownloadService
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:47:9-50:56
-	android:exported
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:49:13-37
-	android:foregroundServiceType
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:50:13-53
+intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:scheme:http+data:scheme:https
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:47:13-53:29
+action#android.intent.action.VIEW
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:48:17-69
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:48:13-52
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:48:25-66
+category#android.intent.category.DEFAULT
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:49:17-76
+	android:name
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:49:27-73
+category#android.intent.category.BROWSABLE
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:50:17-78
+	android:name
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:50:27-75
+data
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:51:17-47
+	android:scheme
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:51:23-44
+service#com.videdownloader.app.service.DownloadService
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:56:9-59:56
+	android:exported
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:58:13-37
+	android:foregroundServiceType
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:59:13-53
+	android:name
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:57:13-52
 uses-sdk
 INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml
@@ -279,6 +311,22 @@ MERGED from [com.google.android.gms:play-services-ads:23.0.0] C:\Users\bhara\.gr
 MERGED from [com.google.android.gms:play-services-ads:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4e855dab95ce8b9ac963f38a35b16edb\transformed\play-services-ads-23.0.0\AndroidManifest.xml:21:5-23:52
 MERGED from [androidx.webkit:webkit:1.12.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\27aae379c1ac066fb4fd0f424ed95fea\transformed\webkit-1.12.1\AndroidManifest.xml:5:5-44
 MERGED from [androidx.webkit:webkit:1.12.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\27aae379c1ac066fb4fd0f424ed95fea\transformed\webkit-1.12.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.media3:media3-ui:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2c6a0f5eeb506ec2581ed6c00ce3d8de\transformed\media3-ui-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-ui:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2c6a0f5eeb506ec2581ed6c00ce3d8de\transformed\media3-ui-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-extractor:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\18d86da366b58208ea8e9ec9103752a7\transformed\media3-extractor-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-extractor:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\18d86da366b58208ea8e9ec9103752a7\transformed\media3-extractor-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-container:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ec150bdf0dea6fb8522140a4ecc33da5\transformed\media3-container-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-container:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ec150bdf0dea6fb8522140a4ecc33da5\transformed\media3-container-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-datasource:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8cf1aa39595b32125ee5927590d7dd8a\transformed\media3-datasource-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-datasource:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8cf1aa39595b32125ee5927590d7dd8a\transformed\media3-datasource-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-decoder:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\aca1b78aa8c28cb70281e834d703d3bd\transformed\media3-decoder-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-decoder:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\aca1b78aa8c28cb70281e834d703d3bd\transformed\media3-decoder-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-database:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\62b15934f738bb611cc1d0e9ac876a4f\transformed\media3-database-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-database:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\62b15934f738bb611cc1d0e9ac876a4f\transformed\media3-database-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-common:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\bcc1effd0dc48a35bf859ae6bffe38f4\transformed\media3-common-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-common:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\bcc1effd0dc48a35bf859ae6bffe38f4\transformed\media3-common-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b9944551d1e3d11ab8b9b2f510a9d67c\transformed\media3-exoplayer-1.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.media3:media3-exoplayer:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b9944551d1e3d11ab8b9b2f510a9d67c\transformed\media3-exoplayer-1.2.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.browser:browser:1.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\c344b49ae424907fd6ce71626c16cc99\transformed\browser-1.4.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.browser:browser:1.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\c344b49ae424907fd6ce71626c16cc99\transformed\browser-1.4.0\AndroidManifest.xml:20:5-22:41
 MERGED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:21:5-44
@@ -301,6 +349,10 @@ MERGED from [com.google.android.gms:play-services-measurement-base:20.1.2] C:\Us
 MERGED from [com.google.android.gms:play-services-measurement-base:20.1.2] C:\Users\bhara\.gradle\caches\8.11.1\transforms\0d62a4cb0f5792c310348bd9d70cc115\transformed\play-services-measurement-base-20.1.2\AndroidManifest.xml:5:5-44
 MERGED from [com.google.android.gms:play-services-basement:18.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ae9f82fe7d3f6b6d7ba41d3f03f3e5e9\transformed\play-services-basement-18.2.0\AndroidManifest.xml:18:5-43
 MERGED from [com.google.android.gms:play-services-basement:18.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ae9f82fe7d3f6b6d7ba41d3f03f3e5e9\transformed\play-services-basement-18.2.0\AndroidManifest.xml:18:5-43
+MERGED from [androidx.media:media:1.6.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4f40f7b7e8389ff0a5e7e7dc20179d52\transformed\media-1.6.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.media:media:1.6.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4f40f7b7e8389ff0a5e7e7dc20179d52\transformed\media-1.6.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.recyclerview:recyclerview:1.3.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\1ce06d0c591892bdc1561b72ec6bdd05\transformed\recyclerview-1.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.3.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\1ce06d0c591892bdc1561b72ec6bdd05\transformed\recyclerview-1.3.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.hilt:hilt-navigation-compose:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7a475ffacd2cbb6766842642e5af4c53\transformed\hilt-navigation-compose-1.2.0\AndroidManifest.xml:5:5-44
 MERGED from [androidx.hilt:hilt-navigation-compose:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7a475ffacd2cbb6766842642e5af4c53\transformed\hilt-navigation-compose-1.2.0\AndroidManifest.xml:5:5-44
 MERGED from [androidx.hilt:hilt-navigation:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ae56020b67b74a94c3de0dec190ef56c\transformed\hilt-navigation-1.2.0\AndroidManifest.xml:5:5-44
@@ -413,12 +465,12 @@ MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\bhara\.gradle\caches\8
 MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\741dce5374c6d8362af524f6a6e357e0\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\79aecf26eb65c27049219a394fb8e46a\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:20:5-44
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\79aecf26eb65c27049219a394fb8e46a\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\12fa7458c0ee4c29bf4ff1be00060290\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\12fa7458c0ee4c29bf4ff1be00060290\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\0dd1eeb0071ed8c033b13688a2c294a1\transformed\autofill-1.0.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\0dd1eeb0071ed8c033b13688a2c294a1\transformed\autofill-1.0.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.graphics:graphics-path:1.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ec73634c98084706d95a7439b4ce9ca6\transformed\graphics-path-1.0.1\AndroidManifest.xml:5:5-44
 MERGED from [androidx.graphics:graphics-path:1.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ec73634c98084706d95a7439b4ce9ca6\transformed\graphics-path-1.0.1\AndroidManifest.xml:5:5-44
-MERGED from [androidx.customview:customview:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\12fa7458c0ee4c29bf4ff1be00060290\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.customview:customview:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\12fa7458c0ee4c29bf4ff1be00060290\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8c782bb174245efeba84ed647adeeff0\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8c782bb174245efeba84ed647adeeff0\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\426af444410ebd1b0e20893c2e415c34\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
@@ -506,18 +558,6 @@ queries
 ADDED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:35:5-51:15
 intent#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+data:scheme:https
 ADDED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:38:9-44:18
-action#android.intent.action.VIEW
-ADDED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:39:13-65
-	android:name
-		ADDED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:39:21-62
-category#android.intent.category.BROWSABLE
-ADDED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:41:13-74
-	android:name
-		ADDED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:41:23-71
-data
-ADDED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:43:13-44
-	android:scheme
-		ADDED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:43:19-41
 intent#action:name:android.support.customtabs.action.CustomTabsService
 ADDED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:47:9-49:18
 action#android.support.customtabs.action.CustomTabsService

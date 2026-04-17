@@ -21,7 +21,8 @@ data class DownloadEntity(
     val sourceTitle: String = "",
     val downloadSpeed: String = "",
     val createdAt: Long = System.currentTimeMillis(),
-    val completedAt: Long? = null
+    val completedAt: Long? = null,
+    val isPrivate: Boolean = false
 )
 
 @Entity(tableName = "bookmarks")

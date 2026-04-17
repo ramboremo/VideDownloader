@@ -35,14 +35,14 @@ public final class AppDatabase_Impl extends AppDatabase {
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(2) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(3) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS `downloads` (`id` TEXT NOT NULL, `url` TEXT NOT NULL, `fileName` TEXT NOT NULL, `filePath` TEXT NOT NULL, `fileSize` INTEGER NOT NULL, `downloadedBytes` INTEGER NOT NULL, `status` TEXT NOT NULL, `quality` TEXT NOT NULL, `mimeType` TEXT NOT NULL, `thumbnailUrl` TEXT, `duration` TEXT, `sourceUrl` TEXT NOT NULL, `sourceTitle` TEXT NOT NULL, `downloadSpeed` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `completedAt` INTEGER, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `downloads` (`id` TEXT NOT NULL, `url` TEXT NOT NULL, `fileName` TEXT NOT NULL, `filePath` TEXT NOT NULL, `fileSize` INTEGER NOT NULL, `downloadedBytes` INTEGER NOT NULL, `status` TEXT NOT NULL, `quality` TEXT NOT NULL, `mimeType` TEXT NOT NULL, `thumbnailUrl` TEXT, `duration` TEXT, `sourceUrl` TEXT NOT NULL, `sourceTitle` TEXT NOT NULL, `downloadSpeed` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `completedAt` INTEGER, `isPrivate` INTEGER NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `bookmarks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `url` TEXT NOT NULL, `title` TEXT NOT NULL, `favicon` TEXT, `createdAt` INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `url` TEXT NOT NULL, `title` TEXT NOT NULL, `favicon` TEXT, `visitedAt` INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '44886c2635b7b80cc1e692f468d687dd')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '40e6465e504bdf62feb8d8cacc299ea3')");
       }
 
       @Override
@@ -93,7 +93,7 @@ public final class AppDatabase_Impl extends AppDatabase {
       @NonNull
       public RoomOpenHelper.ValidationResult onValidateSchema(
           @NonNull final SupportSQLiteDatabase db) {
-        final HashMap<String, TableInfo.Column> _columnsDownloads = new HashMap<String, TableInfo.Column>(16);
+        final HashMap<String, TableInfo.Column> _columnsDownloads = new HashMap<String, TableInfo.Column>(17);
         _columnsDownloads.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDownloads.put("url", new TableInfo.Column("url", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDownloads.put("fileName", new TableInfo.Column("fileName", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
@@ -110,6 +110,7 @@ public final class AppDatabase_Impl extends AppDatabase {
         _columnsDownloads.put("downloadSpeed", new TableInfo.Column("downloadSpeed", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDownloads.put("createdAt", new TableInfo.Column("createdAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsDownloads.put("completedAt", new TableInfo.Column("completedAt", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsDownloads.put("isPrivate", new TableInfo.Column("isPrivate", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysDownloads = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesDownloads = new HashSet<TableInfo.Index>(0);
         final TableInfo _infoDownloads = new TableInfo("downloads", _columnsDownloads, _foreignKeysDownloads, _indicesDownloads);
@@ -151,7 +152,7 @@ public final class AppDatabase_Impl extends AppDatabase {
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "44886c2635b7b80cc1e692f468d687dd", "6b74a8b1e3249983649213d52c234c4e");
+    }, "40e6465e504bdf62feb8d8cacc299ea3", "d008397f1936d23e66461fdcca769453");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;

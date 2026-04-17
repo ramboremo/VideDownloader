@@ -2,6 +2,8 @@ package com.videdownloader.app.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.videdownloader.app.data.db.AppDatabase
 import com.videdownloader.app.data.db.BookmarkDao
 import com.videdownloader.app.data.db.DownloadDao
@@ -20,6 +22,12 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
+    private val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE downloads ADD COLUMN isPrivate INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -28,9 +36,7 @@ object AppModule {
             AppDatabase::class.java,
             "videdownloader.db"
         )
-        // WARNING: This will WIPE the entire database (downloads, bookmarks, history)
-        // on any schema version bump. Replace with proper Migration objects before release.
-        .fallbackToDestructiveMigration()
+        .addMigrations(MIGRATION_2_3)
         .build()
     }
 

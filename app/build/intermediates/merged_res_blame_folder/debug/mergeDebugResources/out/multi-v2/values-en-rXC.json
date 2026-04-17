@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.videdownloader.app-mergeDebugResources-76:/values-en-rXC/values-en-rXC.xml",
+            "outputFile": "com.videdownloader.app-mergeDebugResources-80:/values-en-rXC/values-en-rXC.xml",
             "map": [
                 {
                     "source": "C:\\Users\\bhara\\.gradle\\caches\\8.11.1\\transforms\\368135c521349c6482374797d08c4ef8\\transformed\\foundation-release\\res\\values-en-rXC\\values-en-rXC.xml",

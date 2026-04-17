@@ -21,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.videdownloader.app.ui.browser.BrowserScreen
 import com.videdownloader.app.ui.files.FilesScreen
+import com.videdownloader.app.ui.player.VideoPlayerScreen
 import com.videdownloader.app.ui.settings.SettingsScreen
 import com.videdownloader.app.ui.theme.VideDownloaderTheme
 import com.videdownloader.app.data.preferences.AppPreferences
@@ -37,10 +38,16 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { /* Permissions handled */ }
 
+    // Bug fix: Observable state for deep link URLs so Compose reacts to onNewIntent
+    private val _pendingUrl = mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestPermissions()
+
+        // Set initial URL from cold-start intent
+        _pendingUrl.value = intent?.dataString
 
         setContent {
             val themeMode by preferences.themeMode.collectAsState(initial = "System")
@@ -50,14 +57,27 @@ class MainActivity : ComponentActivity() {
                 else -> androidx.compose.foundation.isSystemInDarkTheme()
             }
 
+            // Observe the pending URL (updated by both onCreate and onNewIntent)
+            val initialUrl by _pendingUrl
+
             VideDownloaderTheme(darkTheme = darkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation()
+                    AppNavigation(initialUrl = initialUrl)
                 }
             }
+        }
+    }
+
+    // Bug fix: Handle subsequent VIEW intents when the activity is already running (singleTask)
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val newUrl = intent.dataString
+        if (!newUrl.isNullOrBlank()) {
+            _pendingUrl.value = newUrl
         }
     }
 
@@ -90,7 +110,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(initialUrl: String? = null) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val sharedWebView = remember { WebView(context) }
@@ -102,18 +122,28 @@ fun AppNavigation() {
         composable("browser") {
             BrowserScreen(
                 sharedWebView = sharedWebView,
+                initialUrl = initialUrl,
                 onNavigateToFiles = { navController.navigate("files") { launchSingleTop = true } },
                 onNavigateToSettings = { navController.navigate("settings") { launchSingleTop = true } }
             )
         }
         composable("files") {
             FilesScreen(
+                onBack = { navController.popBackStack() },
+                onPlay = { downloadId -> navController.navigate("player/$downloadId") { launchSingleTop = true } }
+            )
+        }
+        composable("player/{downloadId}") { backStackEntry ->
+            val downloadId = backStackEntry.arguments?.getString("downloadId") ?: return@composable
+            VideoPlayerScreen(
+                downloadId = downloadId,
                 onBack = { navController.popBackStack() }
             )
         }
         composable("settings") {
             SettingsScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onClearCache = { sharedWebView.clearCache(true) }
             )
         }
     }

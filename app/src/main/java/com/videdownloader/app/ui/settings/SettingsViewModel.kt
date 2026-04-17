@@ -23,6 +23,7 @@ class SettingsViewModel @Inject constructor(
     val themeMode = preferences.themeMode.stateIn(viewModelScope, SharingStarted.Lazily, "System")
     val hideToolbarLabel = preferences.hideToolbarLabel.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val storagePath = preferences.storagePath.stateIn(viewModelScope, SharingStarted.Lazily, "")
+    val privateFolderPin = preferences.privateFolderPin.stateIn(viewModelScope, SharingStarted.Lazily, "")
 
     fun setWifiOnly(value: Boolean) = viewModelScope.launch { preferences.setWifiOnly(value) }
     fun setSyncGallery(value: Boolean) = viewModelScope.launch { preferences.setSyncGallery(value) }
@@ -32,4 +33,22 @@ class SettingsViewModel @Inject constructor(
     fun setHideToolbarLabel(value: Boolean) = viewModelScope.launch { preferences.setHideToolbarLabel(value) }
 
     fun clearHistory() = viewModelScope.launch { historyDao.clearHistory() }
+
+    // Bug fix #9: PIN change/reset methods
+    fun verifyCurrentPin(input: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = preferences.verifyPin(input)
+            onResult(result)
+        }
+    }
+
+    fun setNewPin(pin: String) {
+        viewModelScope.launch { preferences.setPrivateFolderPin(pin) }
+    }
+
+    fun resetPin() {
+        viewModelScope.launch {
+            preferences.setPrivateFolderPin("") // Clears the hashed PIN
+        }
+    }
 }

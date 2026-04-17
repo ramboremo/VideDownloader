@@ -87,6 +87,11 @@ class VideoDetector @Inject constructor(
         mutableMapOf<String, List<MediaQualityOption>>()
     )
 
+    // Pre-fetched file sizes for standard media URLs
+    private val prefetchedFileSizes = java.util.Collections.synchronizedMap(
+        mutableMapOf<String, Long>()
+    )
+
     fun setCurrentPage(url: String, title: String) {
         currentPageUrl = url
         currentPageTitle = title
@@ -103,7 +108,16 @@ class VideoDetector @Inject constructor(
         _detectedMedia.value = emptyList()
         _hasMedia.value = false
         prefetchedOptions.clear()
+        prefetchedFileSizes.clear()
         currentPageThumbnail = ""
+    }
+
+    /**
+     * Bug fix: Cancel the internal coroutine scope to prevent leaked coroutines.
+     * Should be called from Application.onTerminate() or a lifecycle-aware component.
+     */
+    fun destroy() {
+        scope.cancel()
     }
 
     /**
@@ -202,6 +216,20 @@ class VideoDetector @Inject constructor(
             _hasMedia.value = true
 
             Log.d(TAG, "Detected media: $quality - ${url.take(100)}")
+
+            // Pre-fetch file size in background so it's ready when user clicks download FAB
+            scope.launch {
+                try {
+                    val size = getFileSizeSmart(url)
+                    if (size != null && size > 0) {
+                        prefetchedFileSizes[url] = size
+                        Log.d(TAG, "Pre-fetched file size for ${url.take(60)}: ${size / 1_048_576}MB")
+                    }
+                } catch (e: Exception) {
+                    Log.d(TAG, "Pre-fetch file size failed: ${e.message}")
+                }
+            }
+
             return true
         }
         return false
@@ -231,14 +259,18 @@ class VideoDetector @Inject constructor(
                     }
                     url.contains(".m3u8") -> parseM3u8(media.url)
                     url.contains(".mpd") -> parseMpd(media.url)
-                    else -> listOf(
-                        MediaQualityOption(
-                            url = media.url,
-                            quality = media.quality ?: "Default",
-                            mimeType = media.mimeType ?: "video/mp4",
-                            fileSize = getFileSizeSmart(media.url)
+                    else -> {
+                        // Use pre-fetched file size if available
+                        val cachedSize = prefetchedFileSizes[media.url]
+                        listOf(
+                            MediaQualityOption(
+                                url = media.url,
+                                quality = media.quality ?: "Default",
+                                mimeType = media.mimeType ?: "video/mp4",
+                                fileSize = cachedSize ?: getFileSizeSmart(media.url)
+                            )
                         )
-                    )
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching quality options", e)
@@ -267,7 +299,7 @@ class VideoDetector @Inject constructor(
      * Some entries have format="hls" which point to m3u8 playlists - we skip those
      * since direct MP4 is preferred.
      */
-    private fun parsePornhubGetMedia(getMediaUrl: String): List<MediaQualityOption> {
+    private suspend fun parsePornhubGetMedia(getMediaUrl: String): List<MediaQualityOption> {
         val options = mutableListOf<MediaQualityOption>()
         try {
             val builder = Request.Builder().url(getMediaUrl)
@@ -371,12 +403,14 @@ class VideoDetector @Inject constructor(
                 .mapValues { it.value.first() }
                 .values.toList()
 
-            Log.d(TAG, "Found ${uniqueByQuality.size} unique PH quality options, fetching file sizes...")
+            Log.d(TAG, "Found ${uniqueByQuality.size} unique PH quality options, fetching file sizes concurrently...")
 
-            // Fetch file sizes for each quality option
-            for ((videoUrl, quality) in uniqueByQuality) {
-                val fileSize = getFileSizeSmart(videoUrl)
-                options.add(
+            // Fetch file sizes CONCURRENTLY with a timeout for each
+            val sizeJobs = uniqueByQuality.map { (videoUrl, quality) ->
+                scope.async {
+                    val fileSize = try {
+                        withTimeoutOrNull(5000L) { getFileSizeSmart(videoUrl) }
+                    } catch (e: Exception) { null }
                     MediaQualityOption(
                         url = videoUrl,
                         quality = "${quality}p",
@@ -384,8 +418,9 @@ class VideoDetector @Inject constructor(
                         fileSize = fileSize,
                         mimeType = "video/mp4"
                     )
-                )
+                }
             }
+            options.addAll(sizeJobs.awaitAll())
 
             Log.d(TAG, "PH quality options ready: ${options.map { "${it.quality}=${it.fileSize?.let { s -> "${s / 1_048_576}MB" } ?: "?"}" }}")
 
@@ -430,13 +465,15 @@ class VideoDetector @Inject constructor(
      * 1. Range request (works on PH which blocks HEAD requests)
      * 2. HEAD request (works on most other servers)
      */
-    private fun getFileSizeSmart(url: String): Long? {
-        // Try Range request first (PH and many CDNs support this)
-        val rangeSize = getFileSizeViaRange(url)
-        if (rangeSize != null && rangeSize > 0) return rangeSize
+    private suspend fun getFileSizeSmart(url: String): Long? {
+        return withTimeoutOrNull(5000L) {
+            // Try Range request first (PH and many CDNs support this)
+            val rangeSize = getFileSizeViaRange(url)
+            if (rangeSize != null && rangeSize > 0) return@withTimeoutOrNull rangeSize
 
-        // Fallback to HEAD request
-        return getFileSizeViaHead(url)
+            // Fallback to HEAD request
+            getFileSizeViaHead(url)
+        }
     }
 
     /**
@@ -503,7 +540,10 @@ class VideoDetector @Inject constructor(
 
             val request = builder.build()
             val response = okHttpClient.newCall(request).execute()
-            response.header("Content-Length")?.toLongOrNull()
+            // Bug fix: Close response to prevent connection pool leak
+            val contentLength = response.header("Content-Length")?.toLongOrNull()
+            response.close()
+            contentLength
         } catch (e: Exception) {
             null
         }

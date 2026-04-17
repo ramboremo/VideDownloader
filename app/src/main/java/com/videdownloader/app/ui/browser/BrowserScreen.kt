@@ -7,12 +7,14 @@ import android.view.ViewGroup
 import android.webkit.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,8 +31,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,9 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.videdownloader.app.data.db.HistoryEntity
 import com.videdownloader.app.ui.theme.Orange500
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONArray
+import java.text.SimpleDateFormat
+import java.util.*
 
 data class QuickAccessSite(
     val name: String,
@@ -63,6 +72,7 @@ val quickAccessSites = listOf(
 fun BrowserScreen(
     viewModel: BrowserViewModel = hiltViewModel(),
     sharedWebView: WebView,
+    initialUrl: String? = null,
     onNavigateToFiles: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
@@ -79,15 +89,87 @@ fun BrowserScreen(
     val showMenu by viewModel.showMenu.collectAsState()
     val showTabManager by viewModel.showTabManager.collectAsState()
     val showBookmarks by viewModel.showBookmarks.collectAsState()
+    val showHistory by viewModel.showHistory.collectAsState()
+    val isIncognito by viewModel.isIncognito.collectAsState()
     val tabs by viewModel.tabs.collectAsState()
     val blockAds by viewModel.blockAds.collectAsState()
     val bookmarks by viewModel.bookmarks.collectAsState()
+    val history by viewModel.history.collectAsState()
+    val isNetworkError by viewModel.isNetworkError.collectAsState()
+    val networkErrorCode by viewModel.networkErrorCode.collectAsState()
+    val networkErrorDescription by viewModel.networkErrorDescription.collectAsState()
 
     var urlInput by remember { mutableStateOf("") }
     var webView by remember { mutableStateOf<WebView?>(null) }
     var showHomePage by remember { mutableStateOf(true) }
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
+
+    // Separate incognito WebView — created lazily, destroyed when leaving incognito
+    var incognitoWebView by remember { mutableStateOf<WebView?>(null) }
+
+    // Create/destroy incognito WebView when toggling
+    LaunchedEffect(isIncognito) {
+        if (isIncognito) {
+            // Create a fresh incognito WebView
+            incognitoWebView = WebView(context).apply {
+                settings.apply {
+                    javaScriptEnabled = true
+                    domStorageEnabled = true
+                    databaseEnabled = true
+                    allowFileAccess = true
+                    mediaPlaybackRequiresUserGesture = false
+                    useWideViewPort = true
+                    loadWithOverviewMode = true
+                    builtInZoomControls = true
+                    displayZoomControls = false
+                    setSupportMultipleWindows(false)
+                    mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                    cacheMode = WebSettings.LOAD_NO_CACHE
+                    userAgentString = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                }
+            }
+        } else {
+            // Destroy incognito WebView and clear its data
+            incognitoWebView?.apply {
+                clearCache(true)
+                clearHistory()
+                clearFormData()
+                destroy()
+            }
+            incognitoWebView = null
+            // Obs B fix: Only remove session cookies instead of all cookies.
+            // removeAllCookies() was nuking the regular browsing session (logging users out everywhere).
+            CookieManager.getInstance().removeSessionCookies(null)
+        }
+    }
+
+    LaunchedEffect(initialUrl) {
+        if (!initialUrl.isNullOrBlank()) {
+            showHomePage = false
+            urlInput = initialUrl
+            viewModel.navigateTo(initialUrl)
+        }
+    }
+
+    // --- Fullscreen Video State ---
+    var fullScreenCustomView by remember { mutableStateOf<android.view.View?>(null) }
+    var fullScreenCustomViewCallback by remember { mutableStateOf<WebChromeClient.CustomViewCallback?>(null) }
+
+    // Toggle system UI for true fullscreen padding override
+    val activity = context as? android.app.Activity
+    val window = activity?.window
+    LaunchedEffect(fullScreenCustomView) {
+        if (window != null) {
+            val controller = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
+            if (fullScreenCustomView != null) {
+                controller.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                controller.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            } else {
+                controller.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            }
+        }
+    }
 
     var backPressedOnce by remember { mutableStateOf(false) }
 
@@ -97,7 +179,9 @@ fun BrowserScreen(
             showQualitySheet -> viewModel.dismissQualitySheet()
             showTabManager -> viewModel.dismissTabManager()
             showBookmarks -> viewModel.dismissBookmarks()
-            webView?.canGoBack() == true -> webView?.goBack()
+            showHistory -> viewModel.dismissHistory()
+            isIncognito && incognitoWebView?.canGoBack() == true -> incognitoWebView?.goBack()
+            !isIncognito && webView?.canGoBack() == true -> webView?.goBack()
             !showHomePage -> {
                 showHomePage = true
                 urlInput = ""
@@ -123,11 +207,16 @@ fun BrowserScreen(
         }
     }
 
-    // Navigate when URL changes
-    LaunchedEffect(currentUrl) {
-        if (currentUrl.isNotEmpty() && currentUrl != webView?.url) {
+    // Navigate ONLY when the user explicitly triggers navigation (URL bar, quick access, etc.)
+    // WebView-internal navigation (back/forward, link clicks) does NOT trigger this.
+    val navigationVersion by viewModel.navigationVersion.collectAsState()
+    LaunchedEffect(navigationVersion) {
+        if (currentUrl.isNotEmpty()) {
             showHomePage = false
-            webView?.loadUrl(currentUrl)
+            val activeWv = if (isIncognito) incognitoWebView else webView
+            if (activeWv != null && currentUrl != activeWv.url) {
+                activeWv.loadUrl(currentUrl)
+            }
             urlInput = currentUrl
         }
     }
@@ -263,6 +352,52 @@ fun BrowserScreen(
                                     leadingIcon = { Icon(Icons.Default.Add, null) }
                                 )
                                 DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(if (isIncognito) "Exit Incognito" else "Incognito Mode")
+                                            if (isIncognito) {
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = Color(0xFF6C5CE7)
+                                                ) {
+                                                    Text(
+                                                        "ON",
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                        color = Color.White,
+                                                        fontSize = 9.sp,
+                                                        style = MaterialTheme.typography.labelSmall
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        viewModel.dismissMenu()
+                                        viewModel.toggleIncognito()
+                                        if (!isIncognito) {
+                                            // Entering incognito — go to home
+                                            showHomePage = true
+                                            urlInput = ""
+                                        }
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            if (isIncognito) Icons.Default.VisibilityOff else Icons.Default.Security,
+                                            null,
+                                            tint = if (isIncognito) Color(0xFF6C5CE7) else MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("History") },
+                                    onClick = {
+                                        viewModel.dismissMenu()
+                                        viewModel.showHistory()
+                                    },
+                                    leadingIcon = { Icon(Icons.Default.History, null) }
+                                )
+                                DropdownMenuItem(
                                     text = { Text("Bookmarks") },
                                     onClick = {
                                         viewModel.dismissMenu()
@@ -289,9 +424,45 @@ fun BrowserScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(3.dp),
-                            color = Orange500,
+                            color = if (isIncognito) Color(0xFF6C5CE7) else Orange500,
                             trackColor = Color.Transparent
                         )
+                    }
+
+                    // Incognito indicator bar
+                    AnimatedVisibility(
+                        visible = isIncognito,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF2D2D3A))
+                                .padding(horizontal = 16.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.VisibilityOff,
+                                contentDescription = null,
+                                tint = Color(0xFF6C5CE7),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "You're in Incognito",
+                                color = Color(0xFFB0B0C0),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontSize = 12.sp
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                "History won't be saved",
+                                color = Color(0xFF8080A0),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontSize = 10.sp
+                            )
+                        }
                     }
                 }
             }
@@ -309,35 +480,72 @@ fun BrowserScreen(
                         }
                     )
                 } else {
-                    // WebView
-                    WebViewContent(
-                        viewModel = viewModel,
-                        sharedWebView = sharedWebView,
-                        onWebViewCreated = { wv -> webView = wv },
-                        onUrlChanged = { url ->
-                            urlInput = url
-                        }
-                    )
+                    // WebView — use separate incognito WebView when in incognito mode
+                    if (isIncognito && incognitoWebView != null) {
+                        WebViewContent(
+                            viewModel = viewModel,
+                            sharedWebView = incognitoWebView!!,
+                            onWebViewCreated = { /* incognito WebView already tracked */ },
+                            onUrlChanged = { url -> urlInput = url },
+                            onShowCustomView = { view, callback ->
+                                fullScreenCustomView = view
+                                fullScreenCustomViewCallback = callback
+                            },
+                            onHideCustomView = {
+                                fullScreenCustomView = null
+                                fullScreenCustomViewCallback?.onCustomViewHidden()
+                                fullScreenCustomViewCallback = null
+                            }
+                        )
+                    } else {
+                        WebViewContent(
+                            viewModel = viewModel,
+                            sharedWebView = sharedWebView,
+                            onWebViewCreated = { wv -> webView = wv },
+                            onUrlChanged = { url -> urlInput = url },
+                            onShowCustomView = { view, callback ->
+                                fullScreenCustomView = view
+                                fullScreenCustomViewCallback = callback
+                            },
+                            onHideCustomView = {
+                                fullScreenCustomView = null
+                                fullScreenCustomViewCallback?.onCustomViewHidden()
+                                fullScreenCustomViewCallback = null
+                            }
+                        )
+                    }
+
+                    if (isNetworkError) {
+                        NetworkErrorScreen(
+                            errorCode = networkErrorCode,
+                            description = networkErrorDescription,
+                            onRetry = {
+                                viewModel.clearPageError()
+                                if (isIncognito) incognitoWebView?.reload() else webView?.reload()
+                            }
+                        )
+                    }
                 }
 
                 // Floating download button
                 FloatingDownloadButton(
                     hasMedia = hasMedia,
                     mediaCount = detectedMedia.size,
+                    thumbnailUrl = detectedMedia.firstOrNull()?.thumbnailUrl,
                     onClick = { viewModel.onDownloadFabClicked() },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 16.dp, bottom = 16.dp)
                 )
 
-                // "Play video first" message
+                // "Play video first" message — Bug fix: use theme-aware colors instead of hardcoded dark
                 if (showNoVideoMessage) {
                     Surface(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .padding(bottom = 80.dp),
                         shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFF333333),
+                        color = MaterialTheme.colorScheme.inverseSurface,
                         shadowElevation = 8.dp
                     ) {
                         Row(
@@ -353,7 +561,7 @@ fun BrowserScreen(
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
                                 "Play a video first, then download",
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.inverseOnSurface,
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -378,12 +586,16 @@ fun BrowserScreen(
                     BottomNavItem(
                         icon = Icons.AutoMirrored.Filled.ArrowBack,
                         label = "Back",
-                        onClick = { webView?.goBack() }
+                        onClick = {
+                            if (isIncognito) incognitoWebView?.goBack() else webView?.goBack()
+                        }
                     )
                     BottomNavItem(
                         icon = Icons.AutoMirrored.Filled.ArrowForward,
                         label = "Forward",
-                        onClick = { webView?.goForward() }
+                        onClick = {
+                            if (isIncognito) incognitoWebView?.goForward() else webView?.goForward()
+                        }
                     )
                     BottomNavItem(
                         icon = Icons.Default.Home,
@@ -480,6 +692,23 @@ fun BrowserScreen(
             )
         }
 
+        // History overlay
+        if (showHistory) {
+            HistoryOverlay(
+                history = history,
+                onHistoryItemClick = { item ->
+                    viewModel.dismissHistory()
+                    urlInput = item.url
+                    viewModel.navigateTo(item.url)
+                    showHomePage = false
+                },
+                onDeleteItem = { id -> viewModel.deleteHistoryItem(id) },
+                onClearAll = { viewModel.clearAllHistory() },
+                onClearSince = { timestamp -> viewModel.clearHistorySince(timestamp) },
+                onDismiss = { viewModel.dismissHistory() }
+            )
+        }
+
         // Bookmarks overlay
         if (showBookmarks) {
             BookmarksOverlay(
@@ -492,6 +721,48 @@ fun BrowserScreen(
                 },
                 onDismiss = { viewModel.dismissBookmarks() }
             )
+        }
+
+        // Fullscreen Custom View Overlay
+        // Bug fix: Track the FrameLayout container so we can properly remove the custom view on exit
+        val fullScreenContainer = remember { mutableStateOf<android.widget.FrameLayout?>(null) }
+        if (fullScreenCustomView != null) {
+            BackHandler {
+                // Remove the custom view from container before nulling state
+                fullScreenContainer.value?.removeAllViews()
+                fullScreenCustomViewCallback?.onCustomViewHidden()
+                fullScreenCustomViewCallback = null
+                fullScreenCustomView = null
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+            ) {
+                AndroidView(
+                    factory = { context ->
+                        android.widget.FrameLayout(context).apply {
+                            layoutParams = ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                            )
+                            setBackgroundColor(android.graphics.Color.BLACK)
+                            fullScreenContainer.value = this
+                        }
+                    },
+                    update = { container ->
+                        // Ensure the custom view is properly parented
+                        container.removeAllViews()
+                        val view = fullScreenCustomView
+                        if (view != null) {
+                            (view.parent as? ViewGroup)?.removeView(view)
+                            container.addView(view)
+                        }
+                        fullScreenContainer.value = container
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
@@ -577,7 +848,9 @@ fun WebViewContent(
     viewModel: BrowserViewModel,
     sharedWebView: WebView,
     onWebViewCreated: (WebView) -> Unit,
-    onUrlChanged: (String) -> Unit
+    onUrlChanged: (String) -> Unit,
+    onShowCustomView: (android.view.View, WebChromeClient.CustomViewCallback) -> Unit = { _, _ -> },
+    onHideCustomView: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -667,6 +940,28 @@ fun WebViewContent(
                         }
                     }
 
+                    override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                        super.onReceivedError(view, request, error)
+                        if (request?.isForMainFrame == true) {
+                            // Bug fix #8: Stop the WebView so it doesn't render its own error page
+                            // behind our custom error screen
+                            view?.stopLoading()
+                            val errorCode = error?.errorCode ?: 0
+                            val description = error?.description?.toString() ?: "Unknown error"
+                            viewModel.onPageError(errorCode, description)
+                        }
+                    }
+
+                    @Deprecated("Deprecated in Java", ReplaceWith("super.onReceivedError(view, errorCode, description, failingUrl)"))
+                    override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                        super.onReceivedError(view, errorCode, description, failingUrl)
+                        if (failingUrl == view?.url) {
+                            // Bug fix #8: Stop the WebView so it doesn't render its own error page
+                            view?.stopLoading()
+                            viewModel.onPageError(errorCode, description ?: "Unknown error")
+                        }
+                    }
+
                     // Bug fix #8: Removed deprecated shouldInterceptRequest(WebView?, String?)
                     // overload — on API 21+ both overloads fire, causing double-detection.
 
@@ -697,6 +992,18 @@ fun WebViewContent(
                         super.onReceivedTitle(view, title)
                         title?.let { viewModel.onTitleChanged(it) }
                     }
+
+                    override fun onShowCustomView(view: android.view.View?, callback: CustomViewCallback?) {
+                        super.onShowCustomView(view, callback)
+                        if (view != null && callback != null) {
+                            onShowCustomView(view, callback)
+                        }
+                    }
+
+                    override fun onHideCustomView() {
+                        super.onHideCustomView()
+                        onHideCustomView()
+                    }
                 }
 
                 onWebViewCreated(this)
@@ -713,15 +1020,119 @@ fun WebViewContent(
 fun FloatingDownloadButton(
     hasMedia: Boolean,
     mediaCount: Int,
+    thumbnailUrl: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val animatedColor by animateColorAsState(
         targetValue = if (hasMedia) Orange500 else Color(0xFFBDBDBD),
+        animationSpec = tween(400),
         label = "fab_color"
     )
 
-    Box(modifier = modifier) {
+    // --- Animation state ---
+    val arrowAlpha = remember { Animatable(1f) }
+    val arrowOffsetY = remember { Animatable(0f) }
+    val thumbAlpha = remember { Animatable(0f) }
+    val thumbScale = remember { Animatable(0.5f) }
+    val thumbOffsetY = remember { Animatable(0f) }
+    val fabScale = remember { Animatable(1f) }
+    val glowRingScale = remember { Animatable(1f) }
+    val glowRingAlpha = remember { Animatable(0f) }
+    val badgeScale = remember { Animatable(0f) }
+
+    // Trigger animation when media is first detected
+    LaunchedEffect(hasMedia) {
+        if (hasMedia && !thumbnailUrl.isNullOrBlank() && thumbnailUrl != "null") {
+            // --- Glow ring shockwave + FAB bump (fire-and-forget parallel) ---
+            coroutineScope {
+                launch {
+                    glowRingAlpha.snapTo(0.55f)
+                    glowRingScale.snapTo(1f)
+                    coroutineScope {
+                        launch { glowRingAlpha.animateTo(0f, tween(700, easing = FastOutSlowInEasing)) }
+                        launch { glowRingScale.animateTo(2.2f, tween(700, easing = FastOutSlowInEasing)) }
+                    }
+                }
+                launch {
+                    fabScale.animateTo(1.12f, tween(140, easing = FastOutSlowInEasing))
+                    fabScale.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = 400f))
+                }
+                // Phase 1: Download arrow slides UP and fades out (parallel alpha + offset)
+                launch { arrowAlpha.animateTo(0f, tween(220, easing = FastOutSlowInEasing)) }
+                launch { arrowOffsetY.animateTo(-28f, tween(220, easing = FastOutSlowInEasing)) }
+            }
+
+            delay(60)
+
+            // Phase 2: Thumbnail pops in with satisfying spring
+            thumbOffsetY.snapTo(0f)
+            thumbScale.snapTo(0.35f)
+            coroutineScope {
+                launch { thumbAlpha.animateTo(1f, tween(320, easing = FastOutSlowInEasing)) }
+                launch { thumbScale.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 300f)) }
+            }
+
+            // Phase 3: Hold — let the user admire the thumbnail
+            delay(1600)
+
+            // Phase 4: Thumbnail sinks DOWN and fades out
+            coroutineScope {
+                launch { thumbAlpha.animateTo(0f, tween(280, easing = FastOutSlowInEasing)) }
+                launch { thumbOffsetY.animateTo(35f, tween(280, easing = FastOutSlowInEasing)) }
+            }
+
+            delay(80)
+
+            // Phase 5: Download arrow bounces back in from above
+            arrowOffsetY.snapTo(-28f)
+            coroutineScope {
+                launch { arrowAlpha.animateTo(1f, tween(280)) }
+                launch { arrowOffsetY.animateTo(0f, spring(dampingRatio = 0.45f, stiffness = 280f)) }
+            }
+
+            // Badge pop-in
+            badgeScale.snapTo(0f)
+            badgeScale.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 400f))
+
+            // Reset thumbnail state for next detection
+            thumbScale.snapTo(0.5f)
+            thumbOffsetY.snapTo(0f)
+        } else if (hasMedia) {
+            // Media detected but no thumbnail — just show badge
+            arrowAlpha.snapTo(1f)
+            arrowOffsetY.snapTo(0f)
+            badgeScale.snapTo(0f)
+            badgeScale.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 400f))
+        } else {
+            // No media — reset everything
+            arrowAlpha.snapTo(1f)
+            arrowOffsetY.snapTo(0f)
+            thumbAlpha.snapTo(0f)
+            thumbScale.snapTo(0.5f)
+            thumbOffsetY.snapTo(0f)
+            fabScale.snapTo(1f)
+            glowRingAlpha.snapTo(0f)
+            badgeScale.snapTo(0f)
+        }
+    }
+
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        // Glow ring behind the FAB
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .graphicsLayer {
+                    scaleX = glowRingScale.value
+                    scaleY = glowRingScale.value
+                    alpha = glowRingAlpha.value
+                }
+                .border(2.5.dp, Orange500, CircleShape)
+        )
+
+        // Main FAB surface — CircleShape clips children so
+        // the arrow "slides through the ceiling" and the
+        // thumbnail "sinks through the floor"
         FloatingActionButton(
             onClick = onClick,
             containerColor = animatedColor,
@@ -729,21 +1140,58 @@ fun FloatingDownloadButton(
             shape = CircleShape,
             modifier = Modifier
                 .size(56.dp)
+                .graphicsLayer {
+                    scaleX = fabScale.value
+                    scaleY = fabScale.value
+                }
                 .shadow(8.dp, CircleShape)
         ) {
-            Icon(
-                Icons.Default.Download,
-                contentDescription = "Download",
-                modifier = Modifier.size(28.dp)
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Download arrow icon
+                Icon(
+                    Icons.Default.Download,
+                    contentDescription = "Download",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .graphicsLayer {
+                            alpha = arrowAlpha.value
+                            translationY = arrowOffsetY.value
+                        }
+                )
+
+                // Thumbnail overlay — clipped by FAB's CircleShape
+                if (thumbAlpha.value > 0f) {
+                    coil.compose.AsyncImage(
+                        model = thumbnailUrl,
+                        contentDescription = "Detected video",
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                alpha = thumbAlpha.value
+                                scaleX = thumbScale.value
+                                scaleY = thumbScale.value
+                                translationY = thumbOffsetY.value
+                            }
+                    )
+                }
+            }
         }
 
-        // Media count badge
+        // Media count badge with pop-in animation
         if (hasMedia && mediaCount > 0) {
             Surface(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .size(20.dp),
+                    .size(20.dp)
+                    .graphicsLayer {
+                        scaleX = badgeScale.value
+                        scaleY = badgeScale.value
+                    },
                 shape = CircleShape,
                 color = Color(0xFFE53935)
             ) {
@@ -1206,5 +1654,505 @@ private fun formatBytes(bytes: Long): String {
         bytes >= 1_048_576 -> "%.1f MB".format(bytes / 1_048_576.0)
         bytes >= 1024 -> "%.1f KB".format(bytes / 1024.0)
         else -> "$bytes B"
+    }
+}
+
+private fun formatDateHeader(timestamp: Long): String {
+    val cal = Calendar.getInstance()
+    val today = Calendar.getInstance()
+    cal.timeInMillis = timestamp
+
+    val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+
+    return when {
+        cal.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                cal.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR) -> "Today"
+        cal.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) &&
+                cal.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR) -> "Yesterday"
+        else -> SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date(timestamp))
+    }
+}
+
+private fun formatTime(timestamp: Long): String {
+    return SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(timestamp))
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+fun HistoryOverlay(
+    history: List<HistoryEntity>,
+    onHistoryItemClick: (HistoryEntity) -> Unit,
+    onDeleteItem: (Long) -> Unit,
+    onClearAll: () -> Unit,
+    onClearSince: (Long) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+    var showSearch by remember { mutableStateOf(false) }
+    var showClearDialog by remember { mutableStateOf(false) }
+
+    val filteredHistory = remember(history, searchQuery) {
+        if (searchQuery.isBlank()) history
+        else history.filter {
+            it.url.contains(searchQuery, ignoreCase = true) ||
+                    it.title.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
+    // Group by date
+    val groupedHistory = remember(filteredHistory) {
+        filteredHistory.groupBy { formatDateHeader(it.visitedAt) }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Column(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
+            // Top bar
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onDismiss) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        }
+
+                        if (showSearch) {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                placeholder = {
+                                    Text(
+                                        "Search history...",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                },
+                                singleLine = true,
+                                shape = RoundedCornerShape(24.dp),
+                                textStyle = MaterialTheme.typography.bodyMedium,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Orange500,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                                ),
+                                trailingIcon = {
+                                    if (searchQuery.isNotEmpty()) {
+                                        IconButton(onClick = { searchQuery = "" }) {
+                                            Icon(Icons.Default.Close, "Clear", modifier = Modifier.size(18.dp))
+                                        }
+                                    }
+                                }
+                            )
+                        } else {
+                            Text(
+                                "History",
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        IconButton(onClick = { showSearch = !showSearch; if (!showSearch) searchQuery = "" }) {
+                            Icon(
+                                if (showSearch) Icons.Default.Close else Icons.Default.Search,
+                                "Search"
+                            )
+                        }
+
+                        IconButton(onClick = { showClearDialog = true }) {
+                            Icon(Icons.Default.DeleteSweep, "Clear history", tint = Orange500)
+                        }
+                    }
+                }
+            }
+
+            // History list
+            if (filteredHistory.isEmpty()) {
+                // Empty state
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.History,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            if (searchQuery.isNotEmpty()) "No results found"
+                            else "No browsing history",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            if (searchQuery.isNotEmpty()) "Try a different search term"
+                            else "Websites you visit will appear here",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    groupedHistory.forEach { (dateHeader, items) ->
+                        stickyHeader {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                            ) {
+                                Text(
+                                    text = dateHeader,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Orange500,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                                )
+                            }
+                        }
+
+                        items(
+                            items = items,
+                            key = { it.id }
+                        ) { item ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onHistoryItemClick(item) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                                    .animateItem(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Website icon placeholder
+                                Surface(
+                                    modifier = Modifier.size(40.dp),
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.surfaceVariant
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Default.Language,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = item.title.ifEmpty { item.url },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = formatTime(item.visitedAt),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = "  •  ",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontSize = 8.sp
+                                        )
+                                        Text(
+                                            text = item.url.removePrefix("https://").removePrefix("http://").removePrefix("www.").take(40),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+
+                                // Delete individual item
+                                IconButton(
+                                    onClick = { onDeleteItem(item.id) },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Delete",
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+
+                            HorizontalDivider(
+                                modifier = Modifier.padding(start = 68.dp),
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Clear History Dialog
+    if (showClearDialog) {
+        var selectedOption by remember { mutableIntStateOf(2) } // Default to "All time"
+        val options = listOf("Last hour", "Last 24 hours", "All time")
+
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.DeleteSweep,
+                    contentDescription = null,
+                    tint = Orange500,
+                    modifier = Modifier.size(32.dp)
+                )
+            },
+            title = {
+                Text("Clear browsing history")
+            },
+            text = {
+                Column {
+                    Text(
+                        "Choose a time range to clear:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    options.forEachIndexed { index, option ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { selectedOption = index }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedOption == index,
+                                onClick = { selectedOption = index },
+                                colors = RadioButtonDefaults.colors(selectedColor = Orange500)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(option, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    when (selectedOption) {
+                        0 -> {
+                            val oneHourAgo = System.currentTimeMillis() - 3_600_000L
+                            onClearSince(oneHourAgo)
+                        }
+                        1 -> {
+                            val oneDayAgo = System.currentTimeMillis() - 86_400_000L
+                            onClearSince(oneDayAgo)
+                        }
+                        2 -> onClearAll()
+                    }
+                    showClearDialog = false
+                }) {
+                    Text("Clear", color = Orange500, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun NetworkErrorScreen(
+    errorCode: Int,
+    description: String,
+    onRetry: () -> Unit
+) {
+    // Map WebViewClient error codes to user-friendly content
+    data class ErrorInfo(
+        val icon: androidx.compose.ui.graphics.vector.ImageVector,
+        val title: String,
+        val subtitle: String,
+        val accentColor: Color
+    )
+
+    val errorInfo = remember(errorCode, description) {
+        val descLower = description.lowercase()
+        when {
+            // No internet / disconnected
+            errorCode == WebViewClient.ERROR_HOST_LOOKUP && descLower.contains("internet") ->
+                ErrorInfo(Icons.Default.WifiOff, "You're Offline", "Check your internet connection and try again.", Color(0xFFFF6B6B))
+            descLower.contains("internet") || descLower.contains("err_internet_disconnected") ->
+                ErrorInfo(Icons.Default.WifiOff, "You're Offline", "Check your internet connection and try again.", Color(0xFFFF6B6B))
+            // DNS / host not found
+            errorCode == WebViewClient.ERROR_HOST_LOOKUP ->
+                ErrorInfo(Icons.Default.CloudOff, "Site Not Found", "The server's DNS address could not be found. Check the URL or try again later.", Color(0xFF74B9FF))
+            // Connection refused / failed
+            errorCode == WebViewClient.ERROR_CONNECT ->
+                ErrorInfo(Icons.Default.LinkOff, "Connection Refused", "The site refused to connect. It may be down or blocking your request.", Color(0xFFFFA502))
+            // Timeout
+            errorCode == WebViewClient.ERROR_TIMEOUT ->
+                ErrorInfo(Icons.Default.HourglassBottom, "Connection Timed Out", "The server took too long to respond. Try again later.", Color(0xFFA29BFE))
+            // SSL / security
+            errorCode == WebViewClient.ERROR_FAILED_SSL_HANDSHAKE ->
+                ErrorInfo(Icons.Default.GppBad, "Connection Not Secure", "A secure connection to this site could not be established.", Color(0xFFE17055))
+            // Too many redirects
+            errorCode == WebViewClient.ERROR_REDIRECT_LOOP ->
+                ErrorInfo(Icons.Default.Loop, "Too Many Redirects", "This page has a redirect loop. Try clearing your cookies for this site.", Color(0xFFFDCB6E))
+            // Bad URL
+            errorCode == WebViewClient.ERROR_BAD_URL ->
+                ErrorInfo(Icons.Default.BrokenImage, "Invalid URL", "The URL you entered is not valid. Please check and try again.", Color(0xFFE056A0))
+            // Unsupported scheme
+            errorCode == WebViewClient.ERROR_UNSUPPORTED_SCHEME ->
+                ErrorInfo(Icons.Default.Block, "Unsupported Protocol", "This app doesn't support the protocol used by this URL.", Color(0xFF636E72))
+            // I/O error
+            errorCode == WebViewClient.ERROR_IO ->
+                ErrorInfo(Icons.Default.ReportProblem, "Network Error", "A network error occurred while loading the page.", Color(0xFFFF7675))
+            // File not found
+            errorCode == WebViewClient.ERROR_FILE_NOT_FOUND ->
+                ErrorInfo(Icons.Default.SearchOff, "Page Not Found", "The requested page could not be found on this server.", Color(0xFF81ECEC))
+            // Generic fallback
+            else ->
+                ErrorInfo(Icons.Default.ErrorOutline, "Something Went Wrong", "An unexpected error occurred while loading this page.", Orange500)
+        }
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "errorPulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.92f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween<Float>(1800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.12f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween<Float>(1800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Animated pulsing icon with glow rings
+            Box(
+                modifier = Modifier
+                    .size(130.dp)
+                    .clip(CircleShape)
+                    .background(errorInfo.accentColor.copy(alpha = 0.08f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(100.dp * scale)
+                        .clip(CircleShape)
+                        .background(errorInfo.accentColor.copy(alpha = glowAlpha)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(errorInfo.accentColor.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            errorInfo.icon,
+                            contentDescription = errorInfo.title,
+                            modifier = Modifier.size(36.dp),
+                            tint = errorInfo.accentColor
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            Text(
+                text = errorInfo.title,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = errorInfo.subtitle,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                lineHeight = 22.sp,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Button(
+                onClick = onRetry,
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = errorInfo.accentColor),
+                contentPadding = PaddingValues(horizontal = 36.dp, vertical = 14.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp, pressedElevation = 1.dp)
+            ) {
+                Icon(
+                    Icons.Default.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Try Again",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Show technical detail in subtle text
+            Text(
+                text = "Error Code: $errorCode",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }

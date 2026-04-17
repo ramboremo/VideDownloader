@@ -32,6 +32,10 @@ import com.videdownloader.app.ui.files.FilesViewModel;
 import com.videdownloader.app.ui.files.FilesViewModel_HiltModules;
 import com.videdownloader.app.ui.files.FilesViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
 import com.videdownloader.app.ui.files.FilesViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.videdownloader.app.ui.player.PlayerViewModel;
+import com.videdownloader.app.ui.player.PlayerViewModel_HiltModules;
+import com.videdownloader.app.ui.player.PlayerViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.videdownloader.app.ui.player.PlayerViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
 import com.videdownloader.app.ui.settings.SettingsViewModel;
 import com.videdownloader.app.ui.settings.SettingsViewModel_HiltModules;
 import com.videdownloader.app.ui.settings.SettingsViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
@@ -397,7 +401,7 @@ public final class DaggerVideDownloaderApp_HiltComponents_SingletonC {
 
     @Override
     public Map<Class<?>, Boolean> getViewModelKeys() {
-      return LazyClassKeyMap.<Boolean>of(ImmutableMap.<String, Boolean>of(BrowserViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, BrowserViewModel_HiltModules.KeyModule.provide(), FilesViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, FilesViewModel_HiltModules.KeyModule.provide(), SettingsViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, SettingsViewModel_HiltModules.KeyModule.provide()));
+      return LazyClassKeyMap.<Boolean>of(ImmutableMap.<String, Boolean>of(BrowserViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, BrowserViewModel_HiltModules.KeyModule.provide(), FilesViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, FilesViewModel_HiltModules.KeyModule.provide(), PlayerViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, PlayerViewModel_HiltModules.KeyModule.provide(), SettingsViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, SettingsViewModel_HiltModules.KeyModule.provide()));
     }
 
     @Override
@@ -423,6 +427,8 @@ public final class DaggerVideDownloaderApp_HiltComponents_SingletonC {
   }
 
   private static final class ViewModelCImpl extends VideDownloaderApp_HiltComponents.ViewModelC {
+    private final SavedStateHandle savedStateHandle;
+
     private final SingletonCImpl singletonCImpl;
 
     private final ActivityRetainedCImpl activityRetainedCImpl;
@@ -433,6 +439,8 @@ public final class DaggerVideDownloaderApp_HiltComponents_SingletonC {
 
     private Provider<FilesViewModel> filesViewModelProvider;
 
+    private Provider<PlayerViewModel> playerViewModelProvider;
+
     private Provider<SettingsViewModel> settingsViewModelProvider;
 
     private ViewModelCImpl(SingletonCImpl singletonCImpl,
@@ -440,7 +448,7 @@ public final class DaggerVideDownloaderApp_HiltComponents_SingletonC {
         ViewModelLifecycle viewModelLifecycleParam) {
       this.singletonCImpl = singletonCImpl;
       this.activityRetainedCImpl = activityRetainedCImpl;
-
+      this.savedStateHandle = savedStateHandleParam;
       initialize(savedStateHandleParam, viewModelLifecycleParam);
 
     }
@@ -450,12 +458,13 @@ public final class DaggerVideDownloaderApp_HiltComponents_SingletonC {
         final ViewModelLifecycle viewModelLifecycleParam) {
       this.browserViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 0);
       this.filesViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 1);
-      this.settingsViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 2);
+      this.playerViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 2);
+      this.settingsViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 3);
     }
 
     @Override
     public Map<Class<?>, javax.inject.Provider<ViewModel>> getHiltViewModelMap() {
-      return LazyClassKeyMap.<javax.inject.Provider<ViewModel>>of(ImmutableMap.<String, javax.inject.Provider<ViewModel>>of(BrowserViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) browserViewModelProvider), FilesViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) filesViewModelProvider), SettingsViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) settingsViewModelProvider)));
+      return LazyClassKeyMap.<javax.inject.Provider<ViewModel>>of(ImmutableMap.<String, javax.inject.Provider<ViewModel>>of(BrowserViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) browserViewModelProvider), FilesViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) filesViewModelProvider), PlayerViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) playerViewModelProvider), SettingsViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) settingsViewModelProvider)));
     }
 
     @Override
@@ -488,9 +497,12 @@ public final class DaggerVideDownloaderApp_HiltComponents_SingletonC {
           return (T) new BrowserViewModel(ApplicationContextModule_ProvideApplicationFactory.provideApplication(singletonCImpl.applicationContextModule), singletonCImpl.videoDetectorProvider.get(), singletonCImpl.adBlockerProvider.get(), singletonCImpl.bookmarkDao(), singletonCImpl.historyDao(), singletonCImpl.downloadDao(), singletonCImpl.provideAppPreferencesProvider.get());
 
           case 1: // com.videdownloader.app.ui.files.FilesViewModel 
-          return (T) new FilesViewModel(ApplicationContextModule_ProvideApplicationFactory.provideApplication(singletonCImpl.applicationContextModule), singletonCImpl.downloadDao());
+          return (T) new FilesViewModel(ApplicationContextModule_ProvideApplicationFactory.provideApplication(singletonCImpl.applicationContextModule), singletonCImpl.downloadDao(), singletonCImpl.provideAppPreferencesProvider.get());
 
-          case 2: // com.videdownloader.app.ui.settings.SettingsViewModel 
+          case 2: // com.videdownloader.app.ui.player.PlayerViewModel 
+          return (T) new PlayerViewModel(viewModelCImpl.savedStateHandle, singletonCImpl.downloadDao());
+
+          case 3: // com.videdownloader.app.ui.settings.SettingsViewModel 
           return (T) new SettingsViewModel(singletonCImpl.provideAppPreferencesProvider.get(), singletonCImpl.historyDao());
 
           default: throw new AssertionError(id);

@@ -52,7 +52,7 @@ public final class DownloadDao_Impl implements DownloadDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `downloads` (`id`,`url`,`fileName`,`filePath`,`fileSize`,`downloadedBytes`,`status`,`quality`,`mimeType`,`thumbnailUrl`,`duration`,`sourceUrl`,`sourceTitle`,`downloadSpeed`,`createdAt`,`completedAt`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `downloads` (`id`,`url`,`fileName`,`filePath`,`fileSize`,`downloadedBytes`,`status`,`quality`,`mimeType`,`thumbnailUrl`,`duration`,`sourceUrl`,`sourceTitle`,`downloadSpeed`,`createdAt`,`completedAt`,`isPrivate`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -86,6 +86,8 @@ public final class DownloadDao_Impl implements DownloadDao {
         } else {
           statement.bindLong(16, entity.getCompletedAt());
         }
+        final int _tmp = entity.isPrivate() ? 1 : 0;
+        statement.bindLong(17, _tmp);
       }
     };
     this.__deletionAdapterOfDownloadEntity = new EntityDeletionOrUpdateAdapter<DownloadEntity>(__db) {
@@ -105,7 +107,7 @@ public final class DownloadDao_Impl implements DownloadDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `downloads` SET `id` = ?,`url` = ?,`fileName` = ?,`filePath` = ?,`fileSize` = ?,`downloadedBytes` = ?,`status` = ?,`quality` = ?,`mimeType` = ?,`thumbnailUrl` = ?,`duration` = ?,`sourceUrl` = ?,`sourceTitle` = ?,`downloadSpeed` = ?,`createdAt` = ?,`completedAt` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `downloads` SET `id` = ?,`url` = ?,`fileName` = ?,`filePath` = ?,`fileSize` = ?,`downloadedBytes` = ?,`status` = ?,`quality` = ?,`mimeType` = ?,`thumbnailUrl` = ?,`duration` = ?,`sourceUrl` = ?,`sourceTitle` = ?,`downloadSpeed` = ?,`createdAt` = ?,`completedAt` = ?,`isPrivate` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -139,7 +141,9 @@ public final class DownloadDao_Impl implements DownloadDao {
         } else {
           statement.bindLong(16, entity.getCompletedAt());
         }
-        statement.bindString(17, entity.getId());
+        final int _tmp = entity.isPrivate() ? 1 : 0;
+        statement.bindLong(17, _tmp);
+        statement.bindString(18, entity.getId());
       }
     };
     this.__preparedStmtOfUpdateProgress = new SharedSQLiteStatement(__db) {
@@ -317,9 +321,12 @@ public final class DownloadDao_Impl implements DownloadDao {
   }
 
   @Override
-  public Flow<List<DownloadEntity>> getAllDownloads() {
-    final String _sql = "SELECT * FROM downloads ORDER BY createdAt DESC";
-    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+  public Flow<List<DownloadEntity>> getAllDownloads(final boolean isPrivate) {
+    final String _sql = "SELECT * FROM downloads WHERE isPrivate = ? ORDER BY createdAt DESC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    final int _tmp = isPrivate ? 1 : 0;
+    _statement.bindLong(_argIndex, _tmp);
     return CoroutinesRoom.createFlow(__db, false, new String[] {"downloads"}, new Callable<List<DownloadEntity>>() {
       @Override
       @NonNull
@@ -342,6 +349,7 @@ public final class DownloadDao_Impl implements DownloadDao {
           final int _cursorIndexOfDownloadSpeed = CursorUtil.getColumnIndexOrThrow(_cursor, "downloadSpeed");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfCompletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "completedAt");
+          final int _cursorIndexOfIsPrivate = CursorUtil.getColumnIndexOrThrow(_cursor, "isPrivate");
           final List<DownloadEntity> _result = new ArrayList<DownloadEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final DownloadEntity _item;
@@ -389,7 +397,11 @@ public final class DownloadDao_Impl implements DownloadDao {
             } else {
               _tmpCompletedAt = _cursor.getLong(_cursorIndexOfCompletedAt);
             }
-            _item = new DownloadEntity(_tmpId,_tmpUrl,_tmpFileName,_tmpFilePath,_tmpFileSize,_tmpDownloadedBytes,_tmpStatus,_tmpQuality,_tmpMimeType,_tmpThumbnailUrl,_tmpDuration,_tmpSourceUrl,_tmpSourceTitle,_tmpDownloadSpeed,_tmpCreatedAt,_tmpCompletedAt);
+            final boolean _tmpIsPrivate;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsPrivate);
+            _tmpIsPrivate = _tmp_1 != 0;
+            _item = new DownloadEntity(_tmpId,_tmpUrl,_tmpFileName,_tmpFilePath,_tmpFileSize,_tmpDownloadedBytes,_tmpStatus,_tmpQuality,_tmpMimeType,_tmpThumbnailUrl,_tmpDuration,_tmpSourceUrl,_tmpSourceTitle,_tmpDownloadSpeed,_tmpCreatedAt,_tmpCompletedAt,_tmpIsPrivate);
             _result.add(_item);
           }
           return _result;
@@ -406,11 +418,15 @@ public final class DownloadDao_Impl implements DownloadDao {
   }
 
   @Override
-  public Flow<List<DownloadEntity>> getDownloadsByStatus(final String status) {
-    final String _sql = "SELECT * FROM downloads WHERE status = ? ORDER BY createdAt DESC";
-    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+  public Flow<List<DownloadEntity>> getDownloadsByStatus(final String status,
+      final boolean isPrivate) {
+    final String _sql = "SELECT * FROM downloads WHERE status = ? AND isPrivate = ? ORDER BY createdAt DESC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
     int _argIndex = 1;
     _statement.bindString(_argIndex, status);
+    _argIndex = 2;
+    final int _tmp = isPrivate ? 1 : 0;
+    _statement.bindLong(_argIndex, _tmp);
     return CoroutinesRoom.createFlow(__db, false, new String[] {"downloads"}, new Callable<List<DownloadEntity>>() {
       @Override
       @NonNull
@@ -433,6 +449,7 @@ public final class DownloadDao_Impl implements DownloadDao {
           final int _cursorIndexOfDownloadSpeed = CursorUtil.getColumnIndexOrThrow(_cursor, "downloadSpeed");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfCompletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "completedAt");
+          final int _cursorIndexOfIsPrivate = CursorUtil.getColumnIndexOrThrow(_cursor, "isPrivate");
           final List<DownloadEntity> _result = new ArrayList<DownloadEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final DownloadEntity _item;
@@ -480,7 +497,11 @@ public final class DownloadDao_Impl implements DownloadDao {
             } else {
               _tmpCompletedAt = _cursor.getLong(_cursorIndexOfCompletedAt);
             }
-            _item = new DownloadEntity(_tmpId,_tmpUrl,_tmpFileName,_tmpFilePath,_tmpFileSize,_tmpDownloadedBytes,_tmpStatus,_tmpQuality,_tmpMimeType,_tmpThumbnailUrl,_tmpDuration,_tmpSourceUrl,_tmpSourceTitle,_tmpDownloadSpeed,_tmpCreatedAt,_tmpCompletedAt);
+            final boolean _tmpIsPrivate;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsPrivate);
+            _tmpIsPrivate = _tmp_1 != 0;
+            _item = new DownloadEntity(_tmpId,_tmpUrl,_tmpFileName,_tmpFilePath,_tmpFileSize,_tmpDownloadedBytes,_tmpStatus,_tmpQuality,_tmpMimeType,_tmpThumbnailUrl,_tmpDuration,_tmpSourceUrl,_tmpSourceTitle,_tmpDownloadSpeed,_tmpCreatedAt,_tmpCompletedAt,_tmpIsPrivate);
             _result.add(_item);
           }
           return _result;
@@ -526,6 +547,7 @@ public final class DownloadDao_Impl implements DownloadDao {
           final int _cursorIndexOfDownloadSpeed = CursorUtil.getColumnIndexOrThrow(_cursor, "downloadSpeed");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final int _cursorIndexOfCompletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "completedAt");
+          final int _cursorIndexOfIsPrivate = CursorUtil.getColumnIndexOrThrow(_cursor, "isPrivate");
           final DownloadEntity _result;
           if (_cursor.moveToFirst()) {
             final String _tmpId;
@@ -572,7 +594,11 @@ public final class DownloadDao_Impl implements DownloadDao {
             } else {
               _tmpCompletedAt = _cursor.getLong(_cursorIndexOfCompletedAt);
             }
-            _result = new DownloadEntity(_tmpId,_tmpUrl,_tmpFileName,_tmpFilePath,_tmpFileSize,_tmpDownloadedBytes,_tmpStatus,_tmpQuality,_tmpMimeType,_tmpThumbnailUrl,_tmpDuration,_tmpSourceUrl,_tmpSourceTitle,_tmpDownloadSpeed,_tmpCreatedAt,_tmpCompletedAt);
+            final boolean _tmpIsPrivate;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsPrivate);
+            _tmpIsPrivate = _tmp != 0;
+            _result = new DownloadEntity(_tmpId,_tmpUrl,_tmpFileName,_tmpFilePath,_tmpFileSize,_tmpDownloadedBytes,_tmpStatus,_tmpQuality,_tmpMimeType,_tmpThumbnailUrl,_tmpDuration,_tmpSourceUrl,_tmpSourceTitle,_tmpDownloadSpeed,_tmpCreatedAt,_tmpCompletedAt,_tmpIsPrivate);
           } else {
             _result = null;
           }

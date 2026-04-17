@@ -55,6 +55,21 @@ class BrowserViewModel @Inject constructor(
     private val _loadingProgress = MutableStateFlow(0)
     val loadingProgress: StateFlow<Int> = _loadingProgress.asStateFlow()
 
+    // Navigation counter — incremented ONLY by user-initiated navigateTo() calls.
+    // WebView-internal navigation (back, forward, link clicks) does NOT touch this.
+    private val _navigationVersion = MutableStateFlow(0)
+    val navigationVersion: StateFlow<Int> = _navigationVersion.asStateFlow()
+
+    // Error state
+    private val _isNetworkError = MutableStateFlow(false)
+    val isNetworkError: StateFlow<Boolean> = _isNetworkError.asStateFlow()
+
+    private val _networkErrorCode = MutableStateFlow(0)
+    val networkErrorCode: StateFlow<Int> = _networkErrorCode.asStateFlow()
+
+    private val _networkErrorDescription = MutableStateFlow("")
+    val networkErrorDescription: StateFlow<String> = _networkErrorDescription.asStateFlow()
+
     // Media detection
     val detectedMedia: StateFlow<List<DetectedMedia>> = videoDetector.detectedMedia
     val hasDetectedMedia: StateFlow<Boolean> = videoDetector.hasMedia
@@ -83,6 +98,18 @@ class BrowserViewModel @Inject constructor(
     private val _showTabManager = MutableStateFlow(false)
     val showTabManager: StateFlow<Boolean> = _showTabManager.asStateFlow()
 
+    // Incognito mode
+    private val _isIncognito = MutableStateFlow(false)
+    val isIncognito: StateFlow<Boolean> = _isIncognito.asStateFlow()
+
+    // History panel
+    private val _showHistory = MutableStateFlow(false)
+    val showHistory: StateFlow<Boolean> = _showHistory.asStateFlow()
+
+    val history = historyDao.getAllHistory().stateIn(
+        viewModelScope, SharingStarted.Lazily, emptyList()
+    )
+
     // Bookmarks
     val bookmarks = bookmarkDao.getAllBookmarks().stateIn(
         viewModelScope, SharingStarted.Lazily, emptyList()
@@ -100,6 +127,9 @@ class BrowserViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     fun onUrlChanged(url: String) {
+        // Bug fix #12: Clear error state on any URL change so the error screen
+        // is dismissed when navigating away (e.g., Home button in bottom nav)
+        clearPageError()
         _currentUrl.value = url
         videoDetector.clearDetectedMedia()
         updateActiveTab(url = url)
@@ -112,22 +142,25 @@ class BrowserViewModel @Inject constructor(
     }
 
     fun onPageStarted(url: String) {
+        clearPageError()
         _isLoading.value = true
         _currentUrl.value = url
         videoDetector.clearDetectedMedia()
         videoDetector.setCurrentPage(url, _currentTitle.value)
-
-        // Record history
-        viewModelScope.launch {
-            if (url.isNotEmpty() && url != "about:blank") {
-                historyDao.insertHistory(HistoryEntity(url = url, title = _currentTitle.value))
-            }
-        }
     }
 
     fun onPageFinished(url: String) {
         _isLoading.value = false
         _currentUrl.value = url
+
+        // Bug fix: Record history here (not onPageStarted) so the title is available
+        if (!_isIncognito.value) {
+            viewModelScope.launch {
+                if (url.isNotEmpty() && url != "about:blank") {
+                    historyDao.insertHistory(HistoryEntity(url = url, title = _currentTitle.value))
+                }
+            }
+        }
     }
 
     fun onProgressChanged(progress: Int) {
@@ -135,6 +168,7 @@ class BrowserViewModel @Inject constructor(
     }
 
     fun navigateTo(url: String) {
+        clearPageError()
         if (url.isBlank()) {
             _currentUrl.value = ""
             videoDetector.clearDetectedMedia()
@@ -146,6 +180,8 @@ class BrowserViewModel @Inject constructor(
             else -> getSearchUrl(url)
         }
         _currentUrl.value = finalUrl
+        // Signal the UI to call webView.loadUrl()
+        _navigationVersion.value++
     }
 
     private fun getSearchUrl(query: String): String {
@@ -241,6 +277,7 @@ class BrowserViewModel @Inject constructor(
 
     // Tab management
     fun addNewTab() {
+        clearPageError()
         val newTab = BrowserTab(isActive = true)
         val updatedTabs = _tabs.value.map { it.copy(isActive = false) } + newTab
         _tabs.value = updatedTabs
@@ -251,6 +288,7 @@ class BrowserViewModel @Inject constructor(
     }
 
     fun switchToTab(index: Int) {
+        clearPageError()
         if (index in _tabs.value.indices) {
             val updatedTabs = _tabs.value.mapIndexed { i, tab ->
                 tab.copy(isActive = i == index)
@@ -264,6 +302,7 @@ class BrowserViewModel @Inject constructor(
     }
 
     fun closeTab(index: Int) {
+        clearPageError()
         if (_tabs.value.size <= 1) {
             // Can't close last tab, just reset it
             _tabs.value = listOf(BrowserTab(isActive = true))
@@ -291,6 +330,7 @@ class BrowserViewModel @Inject constructor(
     }
 
     fun closeAllTabs() {
+        clearPageError()
         _tabs.value = listOf(BrowserTab(isActive = true))
         _activeTabIndex.value = 0
         _currentUrl.value = ""
@@ -318,6 +358,18 @@ class BrowserViewModel @Inject constructor(
     fun showTabManager() { _showTabManager.value = true }
     fun dismissTabManager() { _showTabManager.value = false }
 
+    fun onPageError(errorCode: Int, description: String) {
+        _networkErrorCode.value = errorCode
+        _networkErrorDescription.value = description
+        _isNetworkError.value = true
+    }
+
+    fun clearPageError() {
+        _isNetworkError.value = false
+        _networkErrorCode.value = 0
+        _networkErrorDescription.value = ""
+    }
+
     // Bookmarks
     fun toggleBookmarks() { _showBookmarks.value = !_showBookmarks.value }
     fun dismissBookmarks() { _showBookmarks.value = false }
@@ -334,6 +386,31 @@ class BrowserViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    // Incognito
+    fun toggleIncognito() {
+        _isIncognito.value = !_isIncognito.value
+    }
+
+    // History
+    fun showHistory() { _showHistory.value = true }
+    fun dismissHistory() { _showHistory.value = false }
+
+    fun deleteHistoryItem(id: Long) {
+        viewModelScope.launch { historyDao.deleteHistoryById(id) }
+    }
+
+    fun clearAllHistory() {
+        viewModelScope.launch { historyDao.clearHistory() }
+    }
+
+    fun clearHistoryBefore(timestamp: Long) {
+        viewModelScope.launch { historyDao.deleteHistoryBefore(timestamp) }
+    }
+
+    fun clearHistorySince(timestamp: Long) {
+        viewModelScope.launch { historyDao.deleteHistorySince(timestamp) }
     }
 
     // Bug fix #7: Use a single, stable Flow instead of creating one per call.

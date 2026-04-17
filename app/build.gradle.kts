@@ -92,6 +92,10 @@ dependencies {
     // Gson
     implementation("com.google.code.gson:gson:2.11.0")
 
+    // Media3 (ExoPlayer)
+    implementation("androidx.media3:media3-exoplayer:1.2.0")
+    implementation("androidx.media3:media3-ui:1.2.0")
+
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

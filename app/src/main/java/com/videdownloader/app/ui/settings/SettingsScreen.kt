@@ -3,6 +3,7 @@ package com.videdownloader.app.ui.settings
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -18,7 +19,8 @@ import com.videdownloader.app.ui.theme.Orange500
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onClearCache: () -> Unit = {}
 ) {
     val wifiOnly by viewModel.wifiOnly.collectAsState()
     val syncGallery by viewModel.syncGallery.collectAsState()
@@ -27,11 +29,14 @@ fun SettingsScreen(
     val themeMode by viewModel.themeMode.collectAsState()
     val hideToolbarLabel by viewModel.hideToolbarLabel.collectAsState()
     val storagePath by viewModel.storagePath.collectAsState()
+    val privateFolderPin by viewModel.privateFolderPin.collectAsState()
 
     var showSearchEngineDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showClearHistoryDialog by remember { mutableStateOf(false) }
+    var showChangePinDialog by remember { mutableStateOf(false) }
+    var showResetPinDialog by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
@@ -121,6 +126,23 @@ fun SettingsScreen(
                 title = "Clear browser history",
                 onClick = { showClearHistoryDialog = true }
             )
+
+            // ===== PRIVACY =====
+            SectionHeader("Privacy")
+
+            // Bug fix #9: PIN change/reset option
+            if (privateFolderPin.isNotEmpty()) {
+                SettingsClickItem(
+                    title = "Change Private Folder PIN",
+                    subtitle = "Change your private folder access PIN",
+                    onClick = { showChangePinDialog = true }
+                )
+                SettingsClickItem(
+                    title = "Reset Private Folder PIN",
+                    subtitle = "Remove PIN lock from private folder",
+                    onClick = { showResetPinDialog = true }
+                )
+            }
 
             // ===== HELP =====
             SectionHeader("Help")
@@ -254,11 +276,8 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showClearCacheDialog = false
-                    // Bug fix #10: Actually clear the WebView cache
-                    android.webkit.WebView(context).apply {
-                        clearCache(true)
-                        destroy()
-                    }
+                    // Bug fix #10 / #7: Actually clear the WebView cache using the shared instance
+                    onClearCache()
                     // Also clear WebStorage
                     android.webkit.WebStorage.getInstance().deleteAllData()
                     android.webkit.CookieManager.getInstance().removeAllCookies(null)
@@ -290,6 +309,143 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearHistoryDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Bug fix #9: Change PIN Dialog
+    if (showChangePinDialog) {
+        var currentPin by remember { mutableStateOf("") }
+        var newPin by remember { mutableStateOf("") }
+        var confirmPin by remember { mutableStateOf("") }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
+        var step by remember { mutableIntStateOf(0) } // 0=verify current, 1=enter new
+
+        AlertDialog(
+            onDismissRequest = { showChangePinDialog = false },
+            title = { Text(if (step == 0) "Verify Current PIN" else "Set New PIN") },
+            text = {
+                Column {
+                    if (step == 0) {
+                        Text("Enter your current PIN to continue.")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = currentPin,
+                            onValueChange = { if (it.length <= 6) { currentPin = it; errorMessage = null } },
+                            keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            isError = errorMessage != null,
+                            singleLine = true,
+                            placeholder = { Text("Current PIN") }
+                        )
+                    } else {
+                        Text("Enter a new 4-6 digit PIN.")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = newPin,
+                            onValueChange = { if (it.length <= 6) { newPin = it; errorMessage = null } },
+                            keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            singleLine = true,
+                            placeholder = { Text("New PIN") }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = confirmPin,
+                            onValueChange = { if (it.length <= 6) { confirmPin = it; errorMessage = null } },
+                            keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                            isError = errorMessage != null,
+                            singleLine = true,
+                            placeholder = { Text("Confirm New PIN") }
+                        )
+                    }
+                    if (errorMessage != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(errorMessage!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (step == 0) {
+                        viewModel.verifyCurrentPin(currentPin) { matches ->
+                            if (matches) {
+                                step = 1
+                                errorMessage = null
+                            } else {
+                                errorMessage = "Incorrect PIN"
+                            }
+                        }
+                    } else {
+                        when {
+                            newPin.length < 4 -> errorMessage = "PIN must be at least 4 digits"
+                            newPin != confirmPin -> errorMessage = "PINs don't match"
+                            else -> {
+                                viewModel.setNewPin(newPin)
+                                showChangePinDialog = false
+                                android.widget.Toast.makeText(context, "PIN changed successfully", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }) {
+                    Text(if (step == 0) "Verify" else "Save", color = Orange500)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showChangePinDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Reset PIN Dialog
+    if (showResetPinDialog) {
+        var currentPin by remember { mutableStateOf("") }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { showResetPinDialog = false },
+            title = { Text("Reset Private Folder PIN") },
+            text = {
+                Column {
+                    Text("Enter your current PIN to remove the lock. Your private files will remain in the private folder.")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = currentPin,
+                        onValueChange = { if (it.length <= 6) { currentPin = it; errorMessage = null } },
+                        keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                        isError = errorMessage != null,
+                        singleLine = true,
+                        placeholder = { Text("Current PIN") }
+                    )
+                    if (errorMessage != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(errorMessage!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.verifyCurrentPin(currentPin) { matches ->
+                        if (matches) {
+                            viewModel.resetPin()
+                            showResetPinDialog = false
+                            android.widget.Toast.makeText(context, "PIN removed", android.widget.Toast.LENGTH_SHORT).show()
+                        } else {
+                            errorMessage = "Incorrect PIN"
+                        }
+                    }
+                }) {
+                    Text("Reset", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetPinDialog = false }) {
                     Text("Cancel")
                 }
             }
