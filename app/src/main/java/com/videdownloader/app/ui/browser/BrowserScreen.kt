@@ -162,11 +162,27 @@ fun BrowserScreen(
     LaunchedEffect(fullScreenCustomView) {
         if (window != null) {
             val controller = androidx.core.view.WindowCompat.getInsetsController(window, window.decorView)
-            if (fullScreenCustomView != null) {
+            val isFullscreen = fullScreenCustomView != null
+
+            if (isFullscreen) {
                 controller.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-                controller.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                controller.systemBarsBehavior =
+                    androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+                // Extra fallback for devices/Android versions where insets controller
+                // doesn't fully hide bars for WebView video.
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility =
+                    (android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                            or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                            or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            or android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
             } else {
                 controller.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_VISIBLE
             }
         }
     }
@@ -218,6 +234,10 @@ fun BrowserScreen(
                 activeWv.loadUrl(currentUrl)
             }
             urlInput = currentUrl
+        } else {
+            // Empty URL means we switched to a blank tab — show the home page
+            showHomePage = true
+            urlInput = ""
         }
     }
 
@@ -678,7 +698,8 @@ fun BrowserScreen(
                 onTabClick = { index ->
                     viewModel.switchToTab(index)
                     viewModel.dismissTabManager()
-                    showHomePage = false
+                    // showHomePage is handled by LaunchedEffect(navigationVersion):
+                    // empty URL → showHomePage = true, non-empty URL → showHomePage = false
                 },
                 onCloseTab = { index -> viewModel.closeTab(index) },
                 onCloseAll = { viewModel.closeAllTabs() },
@@ -928,12 +949,19 @@ fun WebViewContent(
                         if (view != null && url != null) {
                             runVideoDetection(view, url)
 
-                            // For Pornhub: re-run after delay because flashvars are
-                            // set by deferred scripts that run after onPageFinished
-                            val isPornhub = url.lowercase().let { u ->
-                                u.contains("pornhub.com") || u.contains("pornhub.net") || u.contains("pornhub.org")
+                            // Re-run detection after a delay for sites that load video URLs
+                            // via deferred scripts (runs after onPageFinished).
+                            // Pornhub uses flashvars; many other adult/video sites use similar patterns.
+                            val needsDelayedDetection = url.lowercase().let { u ->
+                                u.contains("pornhub.com") || u.contains("pornhub.net") || u.contains("pornhub.org") ||
+                                u.contains("porndr.com") || u.contains("xvideos.com") || u.contains("xnxx.com") ||
+                                u.contains("xhamster.com") || u.contains("redtube.com") || u.contains("youporn.com") ||
+                                u.contains("tube8.com") || u.contains("spankbang.com") || u.contains("eporner.com") ||
+                                u.contains("tnaflix.com") || u.contains("pornone.com") || u.contains("hclips.com") ||
+                                // Generic: any page with /video/ or /watch/ in the path likely has deferred video loading
+                                (u.contains("/video/") || u.contains("/watch/") || u.contains("/videos/"))
                             }
-                            if (isPornhub) {
+                            if (needsDelayedDetection) {
                                 view.postDelayed({ runVideoDetection(view, url) }, 2500)
                                 view.postDelayed({ runVideoDetection(view, url) }, 5000)
                             }
@@ -959,6 +987,24 @@ fun WebViewContent(
                             // Bug fix #8: Stop the WebView so it doesn't render its own error page
                             view?.stopLoading()
                             viewModel.onPageError(errorCode, description ?: "Unknown error")
+                        }
+                    }
+
+                    override fun onReceivedHttpError(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                        errorResponse: WebResourceResponse?
+                    ) {
+                        super.onReceivedHttpError(view, request, errorResponse)
+                        // Some geo-blocked / restricted sites return an HTTP error page (e.g. 403/451)
+                        // which may not trigger onReceivedError(). Handle main-frame HTTP errors.
+                        if (request?.isForMainFrame == true) {
+                            val statusCode = errorResponse?.statusCode ?: 0
+                            if (statusCode >= 400) {
+                                view?.stopLoading()
+                                val reason = errorResponse?.reasonPhrase ?: "HTTP error"
+                                viewModel.onPageError(statusCode, "HTTP $statusCode: $reason")
+                            }
                         }
                     }
 
@@ -994,14 +1040,12 @@ fun WebViewContent(
                     }
 
                     override fun onShowCustomView(view: android.view.View?, callback: CustomViewCallback?) {
-                        super.onShowCustomView(view, callback)
                         if (view != null && callback != null) {
                             onShowCustomView(view, callback)
                         }
                     }
 
                     override fun onHideCustomView() {
-                        super.onHideCustomView()
                         onHideCustomView()
                     }
                 }

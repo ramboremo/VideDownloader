@@ -411,8 +411,10 @@ class DownloadService : Service() {
                 }
 
                 // Case 4: Binary file that isn't actually a valid video/audio
-                // Check magic bytes (file signature) for known media formats
-                if (actualFileSize < 2_000_000) { // Only check small files — large ones are likely real
+                // Only validate magic bytes for video/audio MIME types or known media file extensions.
+                // Non-media files (PDFs, ZIPs, text files, etc.) are allowed through without validation.
+                val downloadMimeType = entity?.mimeType ?: ""
+                if (isMediaMimeType(downloadMimeType) || isMediaExtension(file.name)) {
                     if (!isValidMediaFile(file)) {
                         Log.e(TAG, "Download FAILED: File ($actualFileSize bytes) has no valid video/audio signature. Likely corrupted or not a media file.")
                         file.delete()
@@ -616,6 +618,22 @@ class DownloadService : Service() {
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(NOTIFICATION_ID, notification)
     }
+
+    /**
+     * Returns true if the MIME type indicates a video or audio file.
+     * Only "video/" and "audio/" MIME types should be validated against media magic bytes.
+     */
+    private fun isMediaMimeType(mimeType: String): Boolean =
+        mimeType.startsWith("video/") || mimeType.startsWith("audio/")
+
+    /**
+     * Returns true if the file extension is a known media format.
+     * Used as a fallback when the MIME type is generic (e.g., "application/octet-stream").
+     */
+    private fun isMediaExtension(fileName: String): Boolean =
+        fileName.substringAfterLast('.', "").lowercase() in setOf(
+            "mp4", "webm", "mkv", "avi", "mov", "mp3", "m4a", "aac", "flac", "ogg", "wav"
+        )
 
     /**
      * Checks if a file has valid video/audio magic bytes (file signature).

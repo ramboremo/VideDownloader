@@ -49,6 +49,9 @@ class VideoDetector @Inject constructor(
             "propellerads", "adsterra", "exoclick", "spotx", "vpaid", "vast", "adx", "taboola",
             "outbrain", "rubicon", "smartadserver", "innovid", "tremor", "freewheel", "adstream",
             "cdn77-vid", // TrafficJunky CDN used for pre-roll ads
+            "adnxs", "appnexus", "pubmatic", "openx", "rubiconproject", "revcontent", "mgid",
+            "adform", "adtech", "advertising", "/ads/", "/ad/", "ad_tag", "adtag",
+            "preroll", "midroll", "postroll",
             ".gif", ".png", ".jpg", ".jpeg", ".svg", ".ico",
             ".css", ".js", ".woff", ".ttf"
         )
@@ -87,8 +90,14 @@ class VideoDetector @Inject constructor(
         mutableMapOf<String, List<MediaQualityOption>>()
     )
 
-    // Pre-fetched file sizes for standard media URLs
-    private val prefetchedFileSizes = java.util.Collections.synchronizedMap(
+    // Pre-fetched quality options for any detected media URL (m3u8/mp4/etc).
+    // This is used to make the quality sheet instant on click.
+    private val prefetchedQualityOptions = java.util.Collections.synchronizedMap(
+        mutableMapOf<String, List<MediaQualityOption>>()
+    )
+
+    // Pre-fetched file sizes for standard media URLs (internal + exposed for scoring)
+    val prefetchedFileSizes = java.util.Collections.synchronizedMap(
         mutableMapOf<String, Long>()
     )
 
@@ -108,6 +117,7 @@ class VideoDetector @Inject constructor(
         _detectedMedia.value = emptyList()
         _hasMedia.value = false
         prefetchedOptions.clear()
+        prefetchedQualityOptions.clear()
         prefetchedFileSizes.clear()
         currentPageThumbnail = ""
     }
@@ -249,6 +259,10 @@ class VideoDetector @Inject constructor(
     suspend fun fetchQualityOptions(media: DetectedMedia): List<MediaQualityOption> {
         return withContext(Dispatchers.IO) {
             try {
+                prefetchedQualityOptions[media.url]?.let { cached ->
+                    if (cached.isNotEmpty()) return@withContext cached
+                }
+
                 val url = media.url.lowercase()
                 when {
                     // PH get_media API endpoint → parse JSON for direct MP4 URLs
@@ -282,6 +296,23 @@ class VideoDetector @Inject constructor(
                     )
                 )
             }
+        }
+    }
+
+    /**
+     * Prefetch and cache quality options for a media URL so the UI can show the picker instantly.
+     * Safe to call repeatedly; it will no-op if already cached.
+     */
+    suspend fun prefetchQualityOptions(media: DetectedMedia) {
+        if (media.url.isBlank()) return
+        if (prefetchedQualityOptions.containsKey(media.url)) return
+        try {
+            val options = fetchQualityOptions(media)
+            if (options.isNotEmpty()) {
+                prefetchedQualityOptions[media.url] = options
+            }
+        } catch (_: Exception) {
+            // best-effort
         }
     }
 
@@ -777,7 +808,37 @@ class VideoDetector @Inject constructor(
                         } catch(e) {}
                     }
 
-                    // === Generic: Check quality_/media_/qualityItems_ globals ===
+                    // === Generic: Scan inline scripts for direct video URLs ===
+                    // Many sites (porndr, xvideos clones, etc.) embed the video URL
+                    // directly in a JS variable like: var videoUrl = "https://...mp4"
+                    // or inside a JSON config object.
+                    try {
+                        var scripts2 = document.querySelectorAll('script:not([src])');
+                        var videoUrlPatterns = [
+                            /["']?(https?:\/\/[^"'\s]+\.mp4[^"'\s]*)/g,
+                            /["']?(https?:\/\/[^"'\s]+\.m3u8[^"'\s]*)/g,
+                            /["']?(https?:\/\/[^"'\s]+\.webm[^"'\s]*)/g,
+                        ];
+                        for (var si = 0; si < scripts2.length; si++) {
+                            var scriptText = scripts2[si].textContent || '';
+                            if (scriptText.length > 500000) continue; // skip huge scripts
+                            for (var pi = 0; pi < videoUrlPatterns.length; pi++) {
+                                var pattern = videoUrlPatterns[pi];
+                                pattern.lastIndex = 0;
+                                var match;
+                                while ((match = pattern.exec(scriptText)) !== null) {
+                                    var extractedUrl = match[1];
+                                    if (extractedUrl && extractedUrl.length > 20) {
+                                        // Unescape common JS string escapes
+                                        extractedUrl = extractedUrl.replace(/\\/g, '');
+                                        if (extractedUrl.startsWith('http')) {
+                                            results.push(extractedUrl);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch(e) {}
                     try {
                         var ownKeys2 = Object.getOwnPropertyNames(window);
                         for (var ki = 0; ki < ownKeys2.length; ki++) {

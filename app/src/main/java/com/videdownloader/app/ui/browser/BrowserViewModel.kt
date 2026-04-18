@@ -90,6 +90,14 @@ class BrowserViewModel @Inject constructor(
     private val _showNoVideoMessage = MutableStateFlow(false)
     val showNoVideoMessage: StateFlow<Boolean> = _showNoVideoMessage.asStateFlow()
 
+    // Cancelable job for fetching quality options. Prevents stale/duplicated work
+    // from keeping the quality sheet in a loading state.
+    private var qualityFetchJob: Job? = null
+
+    // Background prefetch so the sheet is instant on click.
+    private var qualityPrefetchJob: Job? = null
+    private var lastPrefetchedUrl: String? = null
+
     // Menu state
     private val _showMenu = MutableStateFlow(false)
     val showMenu: StateFlow<Boolean> = _showMenu.asStateFlow()
@@ -126,10 +134,43 @@ class BrowserViewModel @Inject constructor(
         .map { it.isNotEmpty() }
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
+    init {
+        // Prefetch quality options as soon as we have a strong candidate.
+        // This avoids doing the heavy work at click time.
+        viewModelScope.launch {
+            detectedMedia
+                .map { list -> list.asSequence().distinctBy { it.url }.toList() }
+                .distinctUntilChanged()
+                .collectLatest { list ->
+                    if (list.isEmpty()) return@collectLatest
+
+                    // Don't prefetch while the sheet is open/loading; click flow will handle it.
+                    if (_showQualitySheet.value) return@collectLatest
+
+                    delay(400) // debounce: let detection settle (reduces wasted work on noisy pages)
+
+                    val candidate = list.maxByOrNull { scoreMediaCandidate(it) } ?: return@collectLatest
+                    val url = candidate.url
+                    if (url.isBlank() || url == lastPrefetchedUrl) return@collectLatest
+
+                    lastPrefetchedUrl = url
+                    qualityPrefetchJob?.cancel()
+                    qualityPrefetchJob = launch(Dispatchers.IO) {
+                        val startMs = System.currentTimeMillis()
+                        // Keep this bounded; user will still be able to click and fetch on-demand.
+                        withTimeoutOrNull(10_000L) { videoDetector.prefetchQualityOptions(candidate) }
+                        Log.d(TAG, "Prefetch: ${url.take(80)} in ${System.currentTimeMillis() - startMs}ms")
+                    }
+                }
+        }
+    }
+
     fun onUrlChanged(url: String) {
         // Bug fix #12: Clear error state on any URL change so the error screen
         // is dismissed when navigating away (e.g., Home button in bottom nav)
         clearPageError()
+        cancelQualityFetch()
+        cancelQualityPrefetch()
         _currentUrl.value = url
         videoDetector.clearDetectedMedia()
         updateActiveTab(url = url)
@@ -143,6 +184,8 @@ class BrowserViewModel @Inject constructor(
 
     fun onPageStarted(url: String) {
         clearPageError()
+        cancelQualityFetch()
+        cancelQualityPrefetch()
         _isLoading.value = true
         _currentUrl.value = url
         videoDetector.clearDetectedMedia()
@@ -199,49 +242,114 @@ class BrowserViewModel @Inject constructor(
             val mediaList = detectedMedia.value
             if (mediaList.isNotEmpty()) {
                 _showQualitySheet.value = true
+                _qualityOptions.value = emptyList()
                 _isLoadingQualities.value = true
-                viewModelScope.launch(Dispatchers.IO) {
-                    // Fetch qualities for all detected videos concurrently
-                    val deferreds = mediaList.map { media ->
-                        async {
-                            val options = videoDetector.fetchQualityOptions(media)
-                            Pair(media, options)
+
+                // Pick a best candidate immediately (no network calls) so the sheet can
+                // show the right title/thumbnail while options load.
+                val prioritized = mediaList
+                    .asSequence()
+                    .distinctBy { it.url }
+                    .sortedByDescending { scoreMediaCandidate(it) }
+                    .toList()
+
+                _selectedMedia.value = prioritized.firstOrNull()
+
+                cancelQualityFetch()
+                qualityFetchJob = viewModelScope.launch(Dispatchers.IO) {
+                    val startMs = System.currentTimeMillis()
+                    Log.d(TAG, "QualitySheet: detected=${mediaList.size}, candidates=${prioritized.size}")
+
+                    // Fetch options for only the top few candidates and stop as soon as we get
+                    // a usable set. This avoids waiting on ads/noise resources.
+                    val maxCandidatesToTry = minOf(3, prioritized.size)
+                    var finalMedia: DetectedMedia? = null
+                    var finalOptions: List<MediaQualityOption> = emptyList()
+
+                    for (i in 0 until maxCandidatesToTry) {
+                        val media = prioritized[i]
+                        val options = try {
+                            withTimeoutOrNull(8_000L) { videoDetector.fetchQualityOptions(media) } ?: emptyList()
+                        } catch (_: Exception) {
+                            emptyList()
+                        }
+                        if (options.isNotEmpty()) {
+                            finalMedia = media
+                            finalOptions = options
+                            break
                         }
                     }
-                    val results = deferreds.awaitAll()
-                    
-                    // Group results by title to combine individual MP4 qualities of the same video
-                    val groupedResults = results.groupBy { it.first.title }.values.map { groupList ->
-                        // Combine all options, preferring those with actual file sizes
-                        val combinedOptions = groupList.flatMap { it.second }
-                            .groupBy { it.quality }
-                            .map { entry -> entry.value.maxByOrNull { it.fileSize ?: 0L } ?: entry.value.first() }
-                            
-                        val maxFileSize = combinedOptions.maxOfOrNull { it.fileSize ?: 0L } ?: 0L
-                        val hasM3u8 = groupList.any { it.first.url.contains(".m3u8") }
-                        
-                        var score = maxFileSize
-                        if (combinedOptions.size > 1) score += 10_000_000_000L
-                        // Reduced m3u8 priority so actual MP4s with sizes win
-                        if (hasM3u8) score += 5_000_000_000L
-                        
-                        Triple(groupList.first().first, combinedOptions, score)
-                    }
 
-                    val bestGroup = groupedResults.maxByOrNull { it.third }
-
-                    if (bestGroup != null) {
-                        _selectedMedia.value = bestGroup.first
-                        _qualityOptions.value = bestGroup.second.sortedByDescending {
-                            val qstr = it.quality.lowercase()
-                            val num = Regex("\\d+").find(qstr)?.value?.toInt() ?: 0
-                            num + if(it.fileSize != null) 100000 else 0
+                    // Safety fallback: if fast-path found nothing, do the old full scan.
+                    // This preserves download capability even on sites where the main video
+                    // isn't among the top few candidates.
+                    if (finalOptions.isEmpty() && prioritized.isNotEmpty()) {
+                        Log.d(TAG, "QualitySheet: fast-path empty, falling back to full scan (${prioritized.size} items)")
+                        val results = try {
+                            withTimeoutOrNull(20_000L) {
+                                coroutineScope {
+                                    prioritized.map { media ->
+                                        async {
+                                            val options = try {
+                                                videoDetector.fetchQualityOptions(media)
+                                            } catch (_: Exception) {
+                                                emptyList()
+                                            }
+                                            Pair(media, options)
+                                        }
+                                    }.awaitAll()
+                                }
+                            } ?: emptyList()
+                        } catch (_: Exception) {
+                            emptyList()
                         }
-                    } else {
-                        _qualityOptions.value = emptyList()
+
+                        if (results.isNotEmpty()) {
+                            val groupedResults = results
+                                .filter { it.second.isNotEmpty() }
+                                .groupBy { it.first.title }
+                                .values
+                                .map { groupList ->
+                                    val combinedOptions = groupList
+                                        .flatMap { it.second }
+                                        .groupBy { it.quality }
+                                        .map { entry ->
+                                            entry.value.maxByOrNull { it.fileSize ?: 0L } ?: entry.value.first()
+                                        }
+
+                                    val maxFileSize = combinedOptions.maxOfOrNull { it.fileSize ?: 0L } ?: 0L
+                                    val hasM3u8 = groupList.any { it.first.url.contains(".m3u8") }
+
+                                    var score = maxFileSize
+                                    if (combinedOptions.size > 1) score += 10_000_000_000L
+                                    if (hasM3u8) score += 5_000_000_000L
+
+                                    Triple(groupList.first().first, combinedOptions, score)
+                                }
+
+                            val bestGroup = groupedResults.maxByOrNull { it.third }
+                            if (bestGroup != null) {
+                                finalMedia = bestGroup.first
+                                finalOptions = bestGroup.second
+                            }
+                        }
                     }
-                    
-                    _isLoadingQualities.value = false
+
+                    withContext(Dispatchers.Main) {
+                        if (finalMedia != null) _selectedMedia.value = finalMedia
+                        _qualityOptions.value = finalOptions
+                            .filter { it.fileSize == null || it.fileSize > 100_000L } // drop tiny noise files
+                            .sortedByDescending {
+                                val qstr = it.quality.lowercase()
+                                val num = Regex("\\d+").find(qstr)?.value?.toInt() ?: 0
+                                // Prefer entries where size is known, but don't require it.
+                                num + if (it.fileSize != null && it.fileSize > 0L) 100000 else 0
+                            }
+                            .ifEmpty { finalOptions } // fallback: show all if filter removed everything
+                        _isLoadingQualities.value = false
+                    }
+
+                    Log.d(TAG, "QualitySheet: ready in ${System.currentTimeMillis() - startMs}ms options=${finalOptions.size}")
                 }
             }
         } else {
@@ -256,10 +364,12 @@ class BrowserViewModel @Inject constructor(
 
     fun dismissQualitySheet() {
         _showQualitySheet.value = false
+        cancelQualityFetch()
     }
 
     fun startDownload(option: com.videdownloader.app.data.model.MediaQualityOption) {
         _showQualitySheet.value = false
+        cancelQualityFetch()
         val media = _selectedMedia.value
         val baseTitle = media?.title?.takeIf { it.isNotBlank() } ?: _currentTitle.value.ifEmpty { "video_${System.currentTimeMillis()}" }
         
@@ -290,6 +400,8 @@ class BrowserViewModel @Inject constructor(
     fun switchToTab(index: Int) {
         clearPageError()
         if (index in _tabs.value.indices) {
+            cancelQualityFetch()
+            cancelQualityPrefetch()
             val updatedTabs = _tabs.value.mapIndexed { i, tab ->
                 tab.copy(isActive = i == index)
             }
@@ -298,6 +410,8 @@ class BrowserViewModel @Inject constructor(
             val tab = updatedTabs[index]
             _currentUrl.value = tab.url
             _currentTitle.value = tab.title
+            // Switching tabs is a user-driven navigation event; trigger WebView load.
+            _navigationVersion.value++
         }
     }
 
@@ -423,4 +537,59 @@ class BrowserViewModel @Inject constructor(
             }.flowOn(Dispatchers.IO)
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    private fun cancelQualityFetch() {
+        qualityFetchJob?.cancel()
+        qualityFetchJob = null
+        _isLoadingQualities.value = false
+    }
+
+    private fun cancelQualityPrefetch() {
+        qualityPrefetchJob?.cancel()
+        qualityPrefetchJob = null
+        lastPrefetchedUrl = null
+    }
+
+    private fun scoreMediaCandidate(media: DetectedMedia): Int {
+        val url = media.url.lowercase()
+
+        // Strongly prefer Pornhub get_media endpoints (fast + multiple MP4 qualities).
+        val isPhGetMedia = (url.contains("get_media") &&
+                (url.contains("pornhub.com") || url.contains("pornhub.net") || url.contains("pornhub.org")))
+
+        val isDirectVideo = url.substringBefore("?").let { u ->
+            u.endsWith(".mp4") || u.endsWith(".webm") || u.endsWith(".m4v") || u.endsWith(".mov")
+        }
+        val isStream = url.contains(".m3u8") || url.contains(".mpd")
+
+        // Known ad network domains and patterns — these should never be the main video.
+        // File size is NOT a reliable signal (ads can be large, real videos can be small).
+        val adPatterns = listOf(
+            "vast", "vpaid", "preroll", "adserver", "doubleclick", "trafficjunky",
+            "exoclick", "adnxs", "adsystem", "adtech", "advertising", "adform",
+            "smartadserver", "rubiconproject", "openx", "pubmatic", "appnexus",
+            "spotxchange", "spotx", "freewheel", "innovid", "tremor", "taboola",
+            "outbrain", "revcontent", "mgid", "propellerads", "adsterra",
+            "cdn77-vid",   // TrafficJunky pre-roll CDN
+            "magsrv",      // MagSrv ad network
+            "/ads/", "/ad/", "ad_tag", "adtag", "ad_unit", "adunit",
+            "preroll", "midroll", "postroll",
+            "vast.xml", "vast.php", "vast?", "vpaid.js"
+        )
+        val looksLikeAd = adPatterns.any { url.contains(it) }
+
+        // Penalize tiny files (< 500 KB) — real videos are never this small.
+        val fileSize = videoDetector.prefetchedFileSizes[media.url]
+        val isTiny = fileSize != null && fileSize < 500_000L
+
+        var score = 0
+        if (isPhGetMedia) score += 10_000
+        if (isDirectVideo) score += 5_000
+        if (isStream) score += 3_000
+        if (!media.thumbnailUrl.isNullOrBlank() && media.thumbnailUrl != "null") score += 200
+        if (!media.title.isNullOrBlank()) score += 50
+        if (looksLikeAd) score -= 8_000
+        if (isTiny) score -= 8_000
+        return score
+    }
 }
