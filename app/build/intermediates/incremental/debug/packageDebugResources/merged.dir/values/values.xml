@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FF8C00</color>
-    <string name="app_name">VideDownloader</string>
+    <string name="app_name">XDownloader</string>
     <style name="Theme.VideDownloader" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">#FFFFFFFF</item>
         <item name="android:windowLightStatusBar">true</item>

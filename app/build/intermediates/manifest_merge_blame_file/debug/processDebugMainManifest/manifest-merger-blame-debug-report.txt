@@ -1,6 +1,6 @@
 1<?xml version="1.0" encoding="utf-8"?>
 2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-3    package="com.videdownloader.app"
+3    package="com.cognitivechaos.xdownload"
 4    android:versionCode="1"
 5    android:versionName="1.0.0" >
 6
@@ -91,19 +91,19 @@
 48
 49    <permission
 49-->[androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:22:5-24:47
-50        android:name="com.videdownloader.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+50        android:name="com.cognitivechaos.xdownload.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
 50-->[androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:23:9-81
 51        android:protectionLevel="signature" />
 51-->[androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:24:9-44
 52
-53    <uses-permission android:name="com.videdownloader.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+53    <uses-permission android:name="com.cognitivechaos.xdownload.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 53-->[androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:26:5-97
 53-->[androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:26:22-94
 54
 55    <application
 55-->C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:19:5-60:19
-56        android:name="com.videdownloader.app.VideDownloaderApp"
-56-->C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:20:9-42
+56        android:name="com.cognitivechaos.xdownload.XDownloadApp"
+56-->C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:20:9-37
 57        android:allowBackup="true"
 57-->C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:21:9-35
 58        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
@@ -136,7 +136,7 @@
 74
 75        <activity
 75-->C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:35:9-54:20
-76            android:name="com.videdownloader.app.MainActivity"
+76            android:name="com.cognitivechaos.xdownload.MainActivity"
 76-->C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:36:13-41
 77            android:configChanges="orientation|screenSize|keyboardHidden"
 77-->C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:39:13-74
@@ -182,7 +182,7 @@
 98
 99        <service
 99-->C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:56:9-59:56
-100            android:name="com.videdownloader.app.service.DownloadService"
+100            android:name="com.cognitivechaos.xdownload.service.DownloadService"
 100-->C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:57:13-52
 101            android:exported="false"
 101-->C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:58:13-37
@@ -204,7 +204,7 @@
 110-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:63:9-68:43
 111            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
 111-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:64:13-76
-112            android:authorities="com.videdownloader.app.mobileadsinitprovider"
+112            android:authorities="com.cognitivechaos.xdownload.mobileadsinitprovider"
 112-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:65:13-73
 113            android:exported="false"
 113-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b8955ee9fe4b9af9cd49d2ee5639bcb2\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:66:13-37
@@ -283,7 +283,7 @@
 153-->[androidx.work:work-runtime:2.7.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\3bc09e431ec4fdd20b3f41a6923b851d\transformed\work-runtime-2.7.0\AndroidManifest.xml:31:9-39:20
 154            android:name="androidx.startup.InitializationProvider"
 154-->[androidx.work:work-runtime:2.7.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\3bc09e431ec4fdd20b3f41a6923b851d\transformed\work-runtime-2.7.0\AndroidManifest.xml:32:13-67
-155            android:authorities="com.videdownloader.app.androidx-startup"
+155            android:authorities="com.cognitivechaos.xdownload.androidx-startup"
 155-->[androidx.work:work-runtime:2.7.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\3bc09e431ec4fdd20b3f41a6923b851d\transformed\work-runtime-2.7.0\AndroidManifest.xml:33:13-68
 156            android:exported="false" >
 156-->[androidx.work:work-runtime:2.7.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\3bc09e431ec4fdd20b3f41a6923b851d\transformed\work-runtime-2.7.0\AndroidManifest.xml:34:13-37

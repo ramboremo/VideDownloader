@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "VideDownloader"
+rootProject.name = "XDownloader"
 include(":app")

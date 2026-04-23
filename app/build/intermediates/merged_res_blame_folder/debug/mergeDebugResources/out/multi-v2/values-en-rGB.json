@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.videdownloader.app-mergeDebugResources-80:/values-en-rGB/values-en-rGB.xml",
+            "outputFile": "com.cognitivechaos.xdownload.app-mergeDebugResources-80:/values-en-rGB/values-en-rGB.xml",
             "map": [
                 {
                     "source": "C:\\Users\\bhara\\.gradle\\caches\\8.11.1\\transforms\\693ecc6b75bc692b5ad082434f183d21\\transformed\\play-services-base-18.0.0\\res\\values-en-rGB\\values.xml",

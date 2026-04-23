@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.videdownloader.app-mergeDebugResources-80:/values-am/values-am.xml",
+            "outputFile": "com.cognitivechaos.xdownload.app-mergeDebugResources-80:/values-am/values-am.xml",
             "map": [
                 {
                     "source": "C:\\Users\\bhara\\.gradle\\caches\\8.11.1\\transforms\\e8c0caaf21a0a350ad4327e418f78ea1\\transformed\\ui-release\\res\\values-am\\values-am.xml",

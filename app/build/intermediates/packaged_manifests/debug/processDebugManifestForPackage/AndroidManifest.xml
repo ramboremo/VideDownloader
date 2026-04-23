@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.videdownloader.app"
+    package="com.cognitivechaos.xdownload"
     android:versionCode="1"
     android:versionName="1.0.0" >
 
@@ -47,13 +47,13 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <permission
-        android:name="com.videdownloader.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        android:name="com.cognitivechaos.xdownload.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.videdownloader.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+    <uses-permission android:name="com.cognitivechaos.xdownload.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
 
     <application
-        android:name="com.videdownloader.app.VideDownloaderApp"
+        android:name="com.cognitivechaos.xdownload.XDownloadApp"
         android:allowBackup="true"
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:debuggable="true"
@@ -73,7 +73,7 @@
             android:value="ca-app-pub-3940256099942544~3347511713" />
 
         <activity
-            android:name="com.videdownloader.app.MainActivity"
+            android:name="com.cognitivechaos.xdownload.MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="true"
             android:launchMode="singleTask"
@@ -97,7 +97,7 @@
         </activity>
 
         <service
-            android:name="com.videdownloader.app.service.DownloadService"
+            android:name="com.cognitivechaos.xdownload.service.DownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
         <!-- Include the AdActivity and InAppPurchaseActivity configChanges and themes. -->
@@ -109,7 +109,7 @@
 
         <provider
             android:name="com.google.android.gms.ads.MobileAdsInitProvider"
-            android:authorities="com.videdownloader.app.mobileadsinitprovider"
+            android:authorities="com.cognitivechaos.xdownload.mobileadsinitprovider"
             android:exported="false"
             android:initOrder="100" />
 
@@ -152,7 +152,7 @@
 
         <provider
             android:name="androidx.startup.InitializationProvider"
-            android:authorities="com.videdownloader.app.androidx-startup"
+            android:authorities="com.cognitivechaos.xdownload.androidx-startup"
             android:exported="false" >
             <meta-data
                 android:name="androidx.work.WorkManagerInitializer"

@@ -12,3 +12,6 @@ local.properties
 
 # Logs
 *.log
+
+# YTDL
+yt-dlp-ref/

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.videdownloader.app-mergeDebugResources-80:/values-en-rCA/values-en-rCA.xml",
+            "outputFile": "com.cognitivechaos.xdownload.app-mergeDebugResources-80:/values-en-rCA/values-en-rCA.xml",
             "map": [
                 {
                     "source": "C:\\Users\\bhara\\.gradle\\caches\\8.11.1\\transforms\\41ec8476f20a9ebbbb1648d4ab1de953\\transformed\\material3-release\\res\\values-en-rCA\\values-en-rCA.xml",

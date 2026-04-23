@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.videdownloader.app-mergeDebugResources-80:/values-zh-rTW/values-zh-rTW.xml",
+            "outputFile": "com.cognitivechaos.xdownload.app-mergeDebugResources-80:/values-zh-rTW/values-zh-rTW.xml",
             "map": [
                 {
                     "source": "C:\\Users\\bhara\\.gradle\\caches\\8.11.1\\transforms\\ae9f82fe7d3f6b6d7ba41d3f03f3e5e9\\transformed\\play-services-basement-18.2.0\\res\\values-zh-rTW\\values.xml",

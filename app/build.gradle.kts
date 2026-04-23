@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.videdownloader.app"
+    namespace = "com.cognitivechaos.xdownload"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.videdownloader.app"
+        applicationId = "com.cognitivechaos.xdownload"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

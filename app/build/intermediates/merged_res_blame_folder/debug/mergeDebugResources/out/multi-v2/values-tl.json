@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.videdownloader.app-mergeDebugResources-80:/values-tl/values-tl.xml",
+            "outputFile": "com.cognitivechaos.xdownload.app-mergeDebugResources-80:/values-tl/values-tl.xml",
             "map": [
                 {
                     "source": "C:\\Users\\bhara\\.gradle\\caches\\8.11.1\\transforms\\4e855dab95ce8b9ac963f38a35b16edb\\transformed\\play-services-ads-23.0.0\\res\\values-tl\\values.xml",

@@ -246,14 +246,14 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\bh
 	android:usesCleartextTraffic
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:27:9-44
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:20:9-42
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:20:9-37
 meta-data#com.google.android.gms.ads.APPLICATION_ID
 ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:31:9-33:69
 	android:value
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:33:13-67
 	android:name
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:32:13-69
-activity#com.videdownloader.app.MainActivity
+activity#com.cognitivechaos.xdownload.MainActivity
 ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:35:9-54:20
 	android:launchMode
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:38:13-44
@@ -293,7 +293,7 @@ data
 ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:51:17-47
 	android:scheme
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:51:23-44
-service#com.videdownloader.app.service.DownloadService
+service#com.cognitivechaos.xdownload.service.DownloadService
 ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:56:9-59:56
 	android:exported
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:58:13-37
@@ -902,7 +902,7 @@ ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\tran
 		ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:24:9-44
 	android:name
 		ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:23:9-81
-permission#com.videdownloader.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+permission#com.cognitivechaos.xdownload.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:22:5-24:47
 	android:protectionLevel
 		ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:24:9-44
@@ -912,7 +912,7 @@ uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:26:22-94
-uses-permission#com.videdownloader.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+uses-permission#com.cognitivechaos.xdownload.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ede3347104e02be8e4b955b2728a8814\transformed\core-1.15.0\AndroidManifest.xml:26:22-94
