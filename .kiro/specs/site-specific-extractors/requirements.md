@@ -38,6 +38,8 @@ All XNXX and XVideos extraction logic lives in a new `SiteExtractors.kt` file. X
 1. THE `VideoDetector` SHALL continue to intercept PH `/video/get_media` API requests via `shouldInterceptRequest` exactly as it does today, with no changes to the interception logic, header construction, JSON parsing, or pre-fetch flow.
 2. THE `VideoDetector` SHALL continue to expose `parsePornhubGetMedia`, `addPornhubHeaders`, and all PH-related companion object constants without modification.
 3. WHEN the `SiteExtractors` component is introduced, THE `VideoDetector` SHALL NOT have any of its existing PH-related code paths removed or altered.
+4. WHEN `isPornhubPage()` returns true, THE `VideoDetector.onResourceRequest` SHALL return false immediately after the `get_media` check — no generic WebView interception detection SHALL run on PH pages. This fixes the existing bug where PH CDN `.mp4` URLs leak through generic detection and is considered part of the PH gold-standard implementation.
+5. WHEN `isPornhubPage()` returns true, THE suppression described in criterion 4 SHALL be active from the very first resource request on that page — not only after a `get_media` URL has been observed — so that CDN `.mp4` URLs that load before `get_media` fires cannot slip through.
 
 ---
 
@@ -47,11 +49,13 @@ All XNXX and XVideos extraction logic lives in a new `SiteExtractors.kt` file. X
 
 #### Acceptance Criteria
 
-1. WHEN `setCurrentPage(url, title)` is called on `VideoDetector` with a URL matching an XNXX video page pattern (`xnxx.com/video-` or `xnxx3.com/video-`), THE `VideoDetector` SHALL trigger background extraction via `XnxxExtractor`.
-2. WHEN `setCurrentPage(url, title)` is called on `VideoDetector` with a URL matching an XVideos video page pattern (`xvideos.com/video` or `xvideos2.com/video` or `xvideos.es/video`), THE `VideoDetector` SHALL trigger background extraction via `XvideosExtractor`.
+1. WHEN `setCurrentPage(url, title)` is called on `VideoDetector` with a URL whose host matches the regex `(?:video|www)\.xnxx3?\.com` and whose path indicates a video page (e.g., `/video-`), THE `VideoDetector` SHALL trigger background extraction via `XnxxExtractor`. This pattern MUST match both `xnxx.com` and the mirror `xnxx3.com`.
+2. WHEN `setCurrentPage(url, title)` is called on `VideoDetector` with a URL whose host matches the regex `(?:[^.]+\.)?xvideos2?\.com` or `(?:www\.)?xvideos\.es` and whose path indicates a video page (e.g., `/video`), THE `VideoDetector` SHALL trigger background extraction via `XvideosExtractor`. This pattern MUST match subdomain variants such as `fr.xvideos.com` and `de.xvideos.com`, the mirror `xvideos2.com`, and the `.es` TLD variant.
 3. WHEN `setCurrentPage` is called with a URL that does not match any supported site-specific pattern, THE `VideoDetector` SHALL NOT trigger any site-specific extractor.
 4. WHEN `setCurrentPage` is called with a URL matching a supported site but the URL is not a video page (e.g., a category or search page), THE `VideoDetector` SHALL NOT trigger extraction for that URL.
 5. WHEN `clearDetectedMedia()` is called, THE `VideoDetector` SHALL cancel any in-progress site-specific extraction coroutines for the previous page.
+6. WHEN `setCurrentPage` is called with the same URL as `currentPageUrl` and extraction for that URL has already completed or is already in progress, THE `VideoDetector` SHALL NOT trigger a duplicate extraction.
+7. THE site detection regex patterns for XNXX, XVideos, and XHamster SHALL be derived from yt-dlp's canonical extractor patterns so that all known domain variants are covered, including numbered mirror variants (e.g., `xhamster11.desi`, `xhamster19.com`).
 
 ---
 
@@ -102,6 +106,25 @@ All XNXX and XVideos extraction logic lives in a new `SiteExtractors.kt` file. X
 4. IF no quality label can be parsed from the `xhcdn.com` URL, THEN THE `VideoDetector` SHALL assign the quality label `"Default"`.
 5. WHEN multiple `xhcdn.com` video URLs are intercepted for the same XHamster page, THE `VideoDetector` SHALL deduplicate them so the same URL is not added to `_detectedMedia` more than once.
 6. WHEN a `xhcdn.com` video URL is detected, THE `VideoDetector` SHALL pre-fetch its file size in the background on `Dispatchers.IO` without blocking the main thread.
+
+---
+
+### Requirement 6: Generic Detection Suppression for Gold-Standard Sites
+
+**User Story:** As a user, I want the download list to contain only real, high-quality video URLs on sites that have a gold-standard extractor, so that ad pre-rolls, preview clips, thumbnail CDN requests, and HLS segments never appear alongside the actual download.
+
+#### Acceptance Criteria
+
+1. WHEN `onResourceRequest` is called and `isPornhubPage()` is true, THE `VideoDetector` SHALL return false immediately after the `get_media` check — no generic media detection logic SHALL execute for any other URL on that page.
+2. WHEN `onResourceRequest` is called and the current page URL's host matches `(?:video|www)\.xnxx3?\.com`, THE `VideoDetector` SHALL return false immediately — no generic media detection logic SHALL execute on XNXX pages.
+3. WHEN `onResourceRequest` is called and the current page URL's host matches `(?:[^.]+\.)?xvideos2?\.com` or `(?:www\.)?xvideos\.es`, THE `VideoDetector` SHALL return false immediately — no generic media detection logic SHALL execute on XVideos pages.
+4. WHEN `onResourceRequest` is called and the current page URL's host matches `(?:[^.]+\.)?(?:xhamster\.(?:com|one|desi)|xhms\.pro|xhamster\d+\.(?:com|desi)|xhday\.com|xhvid\.com)`, THE `VideoDetector` SHALL process only URLs whose host contains `xhcdn.com` AND whose path or MIME type indicates an actual video file (extension `.mp4` or `.m3u8`, or a MIME type starting with `video/` or `application/x-mpegurl`). All other URLs on XHamster pages SHALL be ignored.
+5. WHEN `onResourceRequest` is called and the current page URL does not match any gold-standard site pattern, THE `VideoDetector` SHALL run generic detection exactly as before — no change to existing behaviour.
+6. WHEN a user navigates to a non-video page of a gold-standard site (e.g., homepage, search, category), THE suppression rules in criteria 1–4 SHALL still apply — no generic detection runs, no `DetectedMedia` entries are added, and the FAB remains hidden. This is the correct and expected outcome.
+7. IF a gold-standard extractor fails silently (network error, HTTP 403, bot detection), THE `VideoDetector` SHALL still suppress generic detection — the user sees zero detections rather than garbage URLs. The failure SHALL be logged internally and SHALL NOT surface an error to the user.
+8. WHEN `setCurrentPage` is called with a gold-standard site URL, THE suppression SHALL be active from the very first subsequent `onResourceRequest` call — not only after the gold extractor has fired.
+9. WHEN a `xhcdn.com` URL is intercepted on an XHamster page and its path or MIME type indicates an image or thumbnail (e.g., extension `.jpg`, `.png`, `.gif`, `.webp`, or MIME type starting with `image/`), THE `VideoDetector` SHALL NOT treat it as a media URL.
+10. IF a page-fetch coroutine for a gold-standard site completes after `clearDetectedMedia()` has been called (i.e., the user has navigated away), THE `VideoDetector` SHALL discard the results and SHALL NOT add any `DetectedMedia` entries. The page URL at coroutine completion time MUST match `currentPageUrl` at the time extraction was triggered.
 
 ---
 

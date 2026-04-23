@@ -74,6 +74,16 @@ class VideoDetector @Inject constructor(
     // Coroutine scope for async pre-fetching
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    // Site-specific extractors for XNXX and XVideos (yt-dlp page-fetch technique)
+    private val siteExtractors = SiteExtractors(okHttpClient) { url ->
+        android.webkit.CookieManager.getInstance().getCookie(url)
+            ?: android.webkit.CookieManager.getInstance().getCookie(currentPageUrl)
+    }
+
+    // Tracks the currently in-flight site-specific extraction coroutine.
+    // Cancelled on every setCurrentPage() and clearDetectedMedia() call to prevent stale results.
+    private var activeExtractionJob: Job? = null
+
     private val _detectedMedia = MutableStateFlow<List<DetectedMedia>>(emptyList())
     val detectedMedia: StateFlow<List<DetectedMedia>> = _detectedMedia.asStateFlow()
 
@@ -103,8 +113,40 @@ class VideoDetector @Inject constructor(
     )
 
     fun setCurrentPage(url: String, title: String) {
+        val urlChanged = url != currentPageUrl
         currentPageUrl = url
         currentPageTitle = title
+
+        // If the URL hasn't changed (e.g. onVideoElementDetected calling us again for the same page),
+        // don't cancel and restart an already in-flight or completed extraction.
+        if (!urlChanged) return
+
+        // Cancel any in-flight extraction from the previous page
+        activeExtractionJob?.cancel()
+        activeExtractionJob = null
+
+        // Capture the URL at launch time — used to discard stale results if user navigates away
+        val triggeredForUrl = url
+
+        activeExtractionJob = when {
+            isXnxxVideoPage() -> scope.launch {
+                val options = siteExtractors.extractXnxx(triggeredForUrl)
+                // Guard: discard results if user navigated away before extraction completed
+                if (currentPageUrl != triggeredForUrl) return@launch
+                registerSiteExtractorResult(triggeredForUrl, options)
+            }
+            isXvideosVideoPage() -> scope.launch {
+                val options = siteExtractors.extractXvideos(triggeredForUrl)
+                if (currentPageUrl != triggeredForUrl) return@launch
+                registerSiteExtractorResult(triggeredForUrl, options)
+            }
+            isXhamsterVideoPage() -> scope.launch {
+                val options = siteExtractors.extractXhamster(triggeredForUrl)
+                if (currentPageUrl != triggeredForUrl) return@launch
+                registerSiteExtractorResult(triggeredForUrl, options)
+            }
+            else -> null
+        }
     }
 
     fun setCurrentThumbnail(url: String) {
@@ -114,6 +156,10 @@ class VideoDetector @Inject constructor(
     }
 
     fun clearDetectedMedia() {
+        // Cancel any in-flight site-specific extraction to prevent stale results
+        activeExtractionJob?.cancel()
+        activeExtractionJob = null
+
         detectedUrls.clear()
         detectionCounter.set(0)
         _detectedMedia.value = emptyList()
@@ -147,6 +193,42 @@ class VideoDetector @Inject constructor(
         val lowUrl = url.lowercase()
         return PH_HOSTS.any { lowUrl.contains(it) } && lowUrl.contains("get_media")
     }
+
+    // ==========================================
+    // Gold-standard site detection helpers
+    // Patterns derived from yt-dlp's canonical extractor _VALID_URL patterns,
+    // covering all known domain variants including numbered mirrors.
+    // ==========================================
+
+    /** Matches xnxx.com, xnxx3.com, video.xnxx.com, www.xnxx3.com */
+    private fun isXnxxPage(): Boolean =
+        Regex("""(?:video|www)\.xnxx3?\.com""").containsMatchIn(currentPageUrl.lowercase())
+
+    /** Matches xvideos.com, xvideos2.com, fr.xvideos.com, de.xvideos.com, xvideos.es, etc. */
+    private fun isXvideosPage(): Boolean =
+        Regex("""(?:[^.]+\.)?xvideos2?\.com""").containsMatchIn(currentPageUrl.lowercase()) ||
+        Regex("""(?:www\.)?xvideos\.es""").containsMatchIn(currentPageUrl.lowercase())
+
+    /**
+     * Matches xhamster.com, xhamster.one, xhamster.desi, xhms.pro,
+     * xhamster1.com, xhamster11.desi, xhamster19.com, xhday.com, xhvid.com, etc.
+     */
+    private fun isXhamsterPage(): Boolean =
+        Regex("""(?:[^.]+\.)?(?:xhamster\.(?:com|one|desi)|xhms\.pro|xhamster\d+\.(?:com|desi)|xhday\.com|xhvid\.com)""")
+            .containsMatchIn(currentPageUrl.lowercase())
+
+    /** XNXX video page: host matches XNXX AND path contains /video- */
+    private fun isXnxxVideoPage(): Boolean =
+        isXnxxPage() && currentPageUrl.contains("/video-", ignoreCase = true)
+
+    /** XVideos video page: host matches XVideos AND path contains /video */
+    private fun isXvideosVideoPage(): Boolean =
+        isXvideosPage() && currentPageUrl.contains("/video", ignoreCase = true)
+
+    /** XHamster video page: host matches XHamster AND path contains /videos/ or /movies/ */
+    private fun isXhamsterVideoPage(): Boolean =
+        isXhamsterPage() && (currentPageUrl.contains("/videos/", ignoreCase = true) ||
+            currentPageUrl.contains("/movies/", ignoreCase = true))
 
     fun onResourceRequest(url: String, mimeType: String? = null): Boolean {
         val lowUrl = url.lowercase()
@@ -192,6 +274,14 @@ class VideoDetector @Inject constructor(
             }
             return true
         }
+
+        // === Gold-standard suppression ===
+        // For sites with dedicated extractors, skip ALL generic WebView interception.
+        // This prevents ad pre-rolls, preview clips, HLS segments, and CDN noise from
+        // appearing in the download list before or alongside the real video.
+        if (isPornhubPage()) return false                          // get_media handles PH
+        if (isXnxxPage() || isXvideosPage()) return false         // page-fetch handles these
+        if (isXhamsterPage()) return false                        // page-fetch handles XHamster too
 
         // === Standard media detection ===
         val isMedia = when {
@@ -249,6 +339,58 @@ class VideoDetector @Inject constructor(
         return false
     }
 
+    /**
+     * Registers the result of a site-specific page-fetch extraction into the detector state.
+     * Called from setCurrentPage() coroutines after the race-condition guard passes.
+     *
+     * - Caches options in prefetchedOptions keyed by page URL
+     * - Adds a single DetectedMedia entry for the page (deduplicated)
+     * - Launches a background coroutine to enrich options with file sizes concurrently
+     */
+    private fun registerSiteExtractorResult(triggeredForUrl: String, options: List<MediaQualityOption>) {
+        if (options.isEmpty()) return
+
+        // Cache options by page URL so fetchQualityOptions can return them instantly
+        prefetchedOptions[triggeredForUrl] = options
+
+        // Add a single DetectedMedia entry for this page (idempotent)
+        if (triggeredForUrl !in detectedUrls) {
+            detectedUrls.add(triggeredForUrl)
+            val media = DetectedMedia(
+                url = triggeredForUrl,
+                title = currentPageTitle.ifEmpty { "Video" },
+                mimeType = "video/mp4",
+                quality = options.first().quality,
+                sourcePageUrl = triggeredForUrl,
+                sourcePageTitle = currentPageTitle,
+                thumbnailUrl = currentPageThumbnail,
+                detectionIndex = detectionCounter.getAndIncrement()
+            )
+            val currentList = _detectedMedia.value.toMutableList()
+            currentList.add(media)
+            _detectedMedia.value = currentList
+            _hasMedia.value = true
+            Log.d(TAG, "Site extractor registered ${options.size} options for ${triggeredForUrl.take(80)}")
+        }
+
+        // Pre-fetch file sizes concurrently in background — instant quality picker on tap
+        scope.launch {
+            try {
+                val sizeJobs = options.map { opt ->
+                    async {
+                        val size = withTimeoutOrNull(5000L) { getFileSizeSmart(opt.url) }
+                        opt.copy(fileSize = size)
+                    }
+                }
+                val withSizes = sizeJobs.awaitAll()
+                prefetchedOptions[triggeredForUrl] = withSizes
+                Log.d(TAG, "File sizes pre-fetched for ${triggeredForUrl.take(60)}: ${withSizes.map { "${it.quality}=${it.fileSize?.let { s -> "${s / 1_048_576}MB" } ?: "?"}" }}")
+            } catch (e: Exception) {
+                Log.d(TAG, "File size pre-fetch failed for ${triggeredForUrl.take(60)}: ${e.message}")
+            }
+        }
+    }
+
     fun onVideoElementDetected(src: String, pageUrl: String, pageTitle: String) {
         if (src.isNotBlank() && src !in detectedUrls) {
             setCurrentPage(pageUrl, pageTitle)
@@ -286,6 +428,15 @@ class VideoDetector @Inject constructor(
     suspend fun fetchQualityOptions(media: DetectedMedia): List<MediaQualityOption> {
         return withContext(Dispatchers.IO) {
             try {
+                // Check prefetchedOptions by sourcePageUrl first — covers XNXX/XVideos site-specific results
+                prefetchedOptions[media.sourcePageUrl]?.let { cached ->
+                    if (cached.isNotEmpty()) return@withContext cached
+                }
+                // Check by media.url — covers PH get_media results (keyed by API URL)
+                prefetchedOptions[media.url]?.let { cached ->
+                    if (cached.isNotEmpty()) return@withContext cached
+                }
+
                 prefetchedQualityOptions[media.url]?.let { cached ->
                     if (cached.isNotEmpty()) return@withContext cached
                 }
@@ -294,9 +445,8 @@ class VideoDetector @Inject constructor(
                 when {
                     // PH get_media API endpoint → parse JSON for direct MP4 URLs
                     isPornhubGetMediaUrl(media.url) -> {
-                        // Use pre-fetched results if available (instant response)
-                        prefetchedOptions[media.url]
-                            ?: parsePornhubGetMedia(media.url)
+                        // prefetchedOptions[media.url] already checked above; go straight to parse
+                        parsePornhubGetMedia(media.url)
                     }
                     url.contains(".m3u8") -> parseM3u8(media.url)
                     url.contains(".mpd") -> parseMpd(media.url)
