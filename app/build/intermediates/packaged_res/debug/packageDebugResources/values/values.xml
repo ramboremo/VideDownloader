@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:ns1="http://schemas.android.com/tools">
     <color name="ic_launcher_background">#FF8C00</color>
     <string name="app_name">XDownloader</string>
+    <string name="com.google.firebase.crashlytics.mapping_file_id" ns1:ignore="UnusedResources,TypographyDashes" translatable="false">00000000000000000000000000000000</string>
+    <string name="com.google.firebase.crashlytics.version_control_info">""</string>
+    <string name="gcm_defaultSenderId" translatable="false">380744108813</string>
+    <string name="google_api_key" translatable="false">AIzaSyA0wqSlx98HY55hnmdZK7YA5Jbpe2gn-5Q</string>
+    <string name="google_app_id" translatable="false">1:380744108813:android:e1265c80f4c92953affe44</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyA0wqSlx98HY55hnmdZK7YA5Jbpe2gn-5Q</string>
+    <string name="google_storage_bucket" translatable="false">xdownloader-cognitivechaos.firebasestorage.app</string>
+    <string name="project_id" translatable="false">xdownloader-cognitivechaos</string>
     <style name="Theme.VideDownloader" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">#FFFFFFFF</item>
         <item name="android:windowLightStatusBar">true</item>

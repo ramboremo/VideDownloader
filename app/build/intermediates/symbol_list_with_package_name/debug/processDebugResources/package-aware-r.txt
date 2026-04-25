@@ -320,7 +320,13 @@ drawable ic_call_answer_video
 drawable ic_call_answer_video_low
 drawable ic_call_decline
 drawable ic_call_decline_low
+drawable ic_dailymotion
+drawable ic_facebook
+drawable ic_google
+drawable ic_instagram
 drawable ic_launcher_foreground
+drawable ic_twitter
+drawable ic_vimeo
 drawable notification_action_background
 drawable notification_bg
 drawable notification_bg_low
@@ -563,6 +569,8 @@ mipmap ic_launcher
 mipmap ic_launcher_round
 plurals exo_controls_fastforward_by_amount_description
 plurals exo_controls_rewind_by_amount_description
+raw firebase_common_keep
+raw firebase_crashlytics_keep
 string androidx_startup
 string app_name
 string call_notification_answer_action
@@ -574,6 +582,8 @@ string call_notification_ongoing_text
 string call_notification_screening_text
 string close_drawer
 string close_sheet
+string com_google_firebase_crashlytics_mapping_file_id
+string com_google_firebase_crashlytics_version_control_info
 string common_google_play_services_enable_button
 string common_google_play_services_enable_text
 string common_google_play_services_enable_title
@@ -652,6 +662,11 @@ string exo_track_unknown
 string fallback_menu_item_copy_link
 string fallback_menu_item_open_in_browser
 string fallback_menu_item_share_link
+string gcm_defaultSenderId
+string google_api_key
+string google_app_id
+string google_crash_reporting_api_key
+string google_storage_bucket
 string in_progress
 string indeterminate
 string m3c_bottom_sheet_collapse_description
@@ -726,6 +741,7 @@ string offline_opt_in_confirm
 string offline_opt_in_decline
 string offline_opt_in_message
 string offline_opt_in_title
+string project_id
 string range_end
 string range_start
 string s1

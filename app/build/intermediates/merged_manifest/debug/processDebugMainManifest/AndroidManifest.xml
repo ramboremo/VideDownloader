@@ -70,7 +70,7 @@
         <!-- Sample AdMob App ID per Google AdMob documentation to prevent crashes before real ID is available -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-4031401294142199~3256366688" />
 
         <activity
             android:name="com.cognitivechaos.xdownload.MainActivity"
@@ -100,7 +100,51 @@
             android:name="com.cognitivechaos.xdownload.service.DownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
-        <!-- Include the AdActivity and InAppPurchaseActivity configChanges and themes. -->
+
+        <activity
+            android:name="androidx.compose.ui.tooling.PreviewActivity"
+            android:exported="true" />
+        <activity
+            android:name="androidx.activity.ComponentActivity"
+            android:exported="true" />
+
+        <service
+            android:name="com.google.firebase.components.ComponentDiscoveryService"
+            android:directBootAware="true"
+            android:exported="false" >
+            <meta-data
+                android:name="com.google.firebase.components:com.google.firebase.crashlytics.FirebaseCrashlyticsKtxRegistrar"
+                android:value="com.google.firebase.components.ComponentRegistrar" />
+            <meta-data
+                android:name="com.google.firebase.components:com.google.firebase.crashlytics.CrashlyticsRegistrar"
+                android:value="com.google.firebase.components.ComponentRegistrar" />
+            <meta-data
+                android:name="com.google.firebase.components:com.google.firebase.sessions.FirebaseSessionsRegistrar"
+                android:value="com.google.firebase.components.ComponentRegistrar" />
+            <meta-data
+                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsKtxRegistrar"
+                android:value="com.google.firebase.components.ComponentRegistrar" />
+            <meta-data
+                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsRegistrar"
+                android:value="com.google.firebase.components.ComponentRegistrar" />
+            <meta-data
+                android:name="com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar"
+                android:value="com.google.firebase.components.ComponentRegistrar" />
+            <meta-data
+                android:name="com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar"
+                android:value="com.google.firebase.components.ComponentRegistrar" />
+        </service>
+        <service
+            android:name="com.google.firebase.sessions.SessionLifecycleService"
+            android:enabled="false"
+            android:exported="false" />
+
+        <provider
+            android:name="com.google.firebase.provider.FirebaseInitProvider"
+            android:authorities="com.cognitivechaos.xdownload.firebaseinitprovider"
+            android:directBootAware="true"
+            android:exported="false"
+            android:initOrder="100" /> <!-- Include the AdActivity and InAppPurchaseActivity configChanges and themes. -->
         <activity
             android:name="com.google.android.gms.ads.AdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
@@ -133,22 +177,6 @@
         <property
             android:name="android.adservices.AD_SERVICES_CONFIG"
             android:resource="@xml/gma_ad_services_config" />
-
-        <activity
-            android:name="com.google.android.gms.common.api.GoogleApiActivity"
-            android:exported="false"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
-
-        <activity
-            android:name="androidx.compose.ui.tooling.PreviewActivity"
-            android:exported="true" />
-        <activity
-            android:name="androidx.activity.ComponentActivity"
-            android:exported="true" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"
@@ -260,15 +288,40 @@
             </intent-filter>
         </receiver>
 
-        <uses-library
-            android:name="android.ext.adservices"
-            android:required="false" />
-
         <service
             android:name="androidx.room.MultiInstanceInvalidationService"
             android:directBootAware="true"
             android:exported="false" />
 
+        <uses-library
+            android:name="android.ext.adservices"
+            android:required="false" />
+
+        <activity
+            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <service
+            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+            android:exported="false" >
+            <meta-data
+                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+                android:value="cct" />
+        </service>
+        <service
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" >
+        </service>
+
+        <receiver
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+            android:exported="false" />
         <receiver
             android:name="androidx.profileinstaller.ProfileInstallReceiver"
             android:directBootAware="false"

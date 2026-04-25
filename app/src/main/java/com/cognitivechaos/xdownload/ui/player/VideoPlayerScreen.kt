@@ -1,7 +1,10 @@
-﻿@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION")
 package com.cognitivechaos.xdownload.ui.player
 
+import android.content.pm.ActivityInfo
 import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -16,6 +19,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -36,6 +42,11 @@ fun VideoPlayerScreen(
     val download by viewModel.download.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    // Fullscreen state
+    var isFullscreen by remember { mutableStateOf(false) }
+    val activity = context as? android.app.Activity
+    val window = activity?.window
 
     // Bug fix #1: ExoPlayer lifecycle managed entirely via DisposableEffect
     // keyed to Unit so it lives exactly as long as this composable is in the tree.
@@ -60,6 +71,27 @@ fun VideoPlayerScreen(
         }
     }
 
+    // Manage fullscreen system UI — hide/show system bars and force landscape
+    LaunchedEffect(isFullscreen) {
+        if (window != null && activity != null) {
+            val controller = WindowCompat.getInsetsController(window, window.decorView)
+            if (isFullscreen) {
+                controller.hide(WindowInsetsCompat.Type.systemBars())
+                controller.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            } else {
+                controller.show(WindowInsetsCompat.Type.systemBars())
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+        }
+    }
+
+    // Handle back press in fullscreen — exit fullscreen first instead of navigating away
+    BackHandler(enabled = isFullscreen) {
+        isFullscreen = false
+    }
+
     // Bug fix #1: Proper lifecycle handling — pause on background, release on dispose.
     // The observer is keyed to the lifecycle owner and the exoPlayer instance, ensuring
     // no stale references survive navigation.
@@ -82,29 +114,43 @@ fun VideoPlayerScreen(
             lifecycleOwner.lifecycle.removeObserver(observer)
             exoPlayer.stop()
             exoPlayer.release()
+            // Restore orientation and system bars when leaving the player screen
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            if (window != null) {
+                val controller = WindowCompat.getInsetsController(window, window.decorView)
+                controller.show(WindowInsetsCompat.Type.systemBars())
+            }
         }
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(download?.fileName ?: "Video Player", color = Color.White) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Black.copy(alpha = 0.5f)
+            // Hide top bar in fullscreen mode
+            AnimatedVisibility(
+                visible = !isFullscreen,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                TopAppBar(
+                    title = { Text(download?.fileName ?: "Video Player", color = Color.White) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Black.copy(alpha = 0.5f)
+                    )
                 )
-            )
+            }
         }
     ) { paddingValues ->
         // Bug fix #6: Apply Scaffold paddingValues so content isn't hidden behind TopAppBar
+        // In fullscreen, skip padding so the player fills the entire screen
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .then(if (!isFullscreen) Modifier.padding(paddingValues) else Modifier)
                 .background(Color.Black)
         ) {
             // Bug fix #18: Show loading/error states instead of empty player
@@ -149,6 +195,10 @@ fun VideoPlayerScreen(
                                 useController = true
                                 setShowNextButton(false)
                                 setShowPreviousButton(false)
+                                // Enable the built-in fullscreen button in the player controls
+                                setFullscreenButtonClickListener { enterFullscreen ->
+                                    isFullscreen = enterFullscreen
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxSize()

@@ -50,20 +50,23 @@ import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.compose.ui.res.painterResource
+import com.cognitivechaos.xdownload.R
+
 data class QuickAccessSite(
     val name: String,
     val url: String,
     val color: Color,
-    val icon: String
+    val iconRes: Int
 )
 
 val quickAccessSites = listOf(
-    QuickAccessSite("Google", "https://www.google.com", Color(0xFF4285F4), "G"),
-    QuickAccessSite("Vimeo", "https://www.vimeo.com", Color(0xFF1AB7EA), "V"),
-    QuickAccessSite("Dailymotion", "https://www.dailymotion.com", Color(0xFF0066DC), "D"),
-    QuickAccessSite("Twitter", "https://www.twitter.com", Color(0xFF1DA1F2), "T"),
-    QuickAccessSite("Facebook", "https://www.facebook.com", Color(0xFF1877F2), "F"),
-    QuickAccessSite("Instagram", "https://www.instagram.com", Color(0xFFE4405F), "I"),
+    QuickAccessSite("Google", "https://www.google.com", Color(0xFF4285F4), R.drawable.ic_google),
+    QuickAccessSite("Vimeo", "https://www.vimeo.com", Color(0xFF1AB7EA), R.drawable.ic_vimeo),
+    QuickAccessSite("Dailymotion", "https://www.dailymotion.com", Color(0xFF0066DC), R.drawable.ic_dailymotion),
+    QuickAccessSite("Twitter", "https://www.twitter.com", Color(0xFF1DA1F2), R.drawable.ic_twitter),
+    QuickAccessSite("Facebook", "https://www.facebook.com", Color(0xFF1877F2), R.drawable.ic_facebook),
+    QuickAccessSite("Instagram", "https://www.instagram.com", Color(0xFFE4405F), R.drawable.ic_instagram),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,6 +88,8 @@ fun BrowserScreen(
     val qualityOptions by viewModel.qualityOptions.collectAsState()
     val isLoadingQualities by viewModel.isLoadingQualities.collectAsState()
     val showNoVideoMessage by viewModel.showNoVideoMessage.collectAsState()
+    val showCopyrightBlockMessage by viewModel.showCopyrightBlockMessage.collectAsState()
+    val isBlockedDomain by viewModel.isBlockedDomain.collectAsState()
     val showMenu by viewModel.showMenu.collectAsState()
     val showTabManager by viewModel.showTabManager.collectAsState()
     val showBookmarks by viewModel.showBookmarks.collectAsState()
@@ -584,7 +589,7 @@ fun BrowserScreen(
 
                 // Floating download button
                 FloatingDownloadButton(
-                    hasMedia = hasMedia,
+                    hasMedia = hasMedia && !isBlockedDomain,
                     mediaCount = detectedMedia.size,
                     thumbnailUrl = detectedMedia.firstOrNull()?.thumbnailUrl,
                     onClick = { viewModel.onDownloadFabClicked() },
@@ -592,6 +597,36 @@ fun BrowserScreen(
                         .align(Alignment.BottomEnd)
                         .padding(end = 16.dp, bottom = 16.dp)
                 )
+
+                // Copyright block message (Google/YouTube)
+                if (showCopyrightBlockMessage) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 80.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.inverseSurface,
+                        shadowElevation = 8.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.inverseOnSurface,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Downloading from this website is not possible due to copyright restrictions",
+                                color = MaterialTheme.colorScheme.inverseOnSurface,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
 
                 // "Play video first" message — Bug fix: use theme-aware colors instead of hardcoded dark
                 if (showNoVideoMessage) {
@@ -875,14 +910,15 @@ fun QuickAccessItem(site: QuickAccessSite, onClick: () -> Unit) {
         Surface(
             modifier = Modifier.size(56.dp),
             shape = CircleShape,
-            color = site.color
+            color = site.color.copy(alpha = 0.1f)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = site.icon,
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    style = MaterialTheme.typography.headlineSmall
+                Image(
+                    painter = painterResource(id = site.iconRes),
+                    contentDescription = site.name,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(8.dp))
                 )
             }
         }
@@ -1787,12 +1823,13 @@ fun TabManagerOverlay(
             // Bottom controls
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                // Bug fix #15: Use theme color instead of hardcoded dark
-                color = MaterialTheme.colorScheme.inverseSurface
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                shadowElevation = 8.dp
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -1800,7 +1837,7 @@ fun TabManagerOverlay(
                     TextButton(onClick = onCloseAll) {
                         Text(
                             "CLOSE ALL",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
@@ -1809,7 +1846,7 @@ fun TabManagerOverlay(
                         Icon(
                             Icons.Default.Add,
                             contentDescription = "Add tab",
-                            tint = Color.White,
+                            tint = Orange500,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -1817,8 +1854,9 @@ fun TabManagerOverlay(
                     TextButton(onClick = onDone) {
                         Text(
                             "DONE",
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelLarge
+                            color = Orange500,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }

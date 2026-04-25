@@ -115,6 +115,13 @@ class BrowserViewModel @Inject constructor(
     private val _showNoVideoMessage = MutableStateFlow(false)
     val showNoVideoMessage: StateFlow<Boolean> = _showNoVideoMessage.asStateFlow()
 
+    private val _showCopyrightBlockMessage = MutableStateFlow(false)
+    val showCopyrightBlockMessage: StateFlow<Boolean> = _showCopyrightBlockMessage.asStateFlow()
+
+    val isBlockedDomain: StateFlow<Boolean> = _currentUrl
+        .map { videoDetector.isDownloadBlockedDomain() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     // Cancelable job for fetching quality options. Prevents stale/duplicated work
     // from keeping the quality sheet in a loading state.
     private var qualityFetchJob: Job? = null
@@ -315,6 +322,16 @@ class BrowserViewModel @Inject constructor(
     }
 
     fun onDownloadFabClicked() {
+        // Block downloads on Google-owned domains (YouTube, etc.)
+        if (videoDetector.isDownloadBlockedDomain()) {
+            _showCopyrightBlockMessage.value = true
+            viewModelScope.launch {
+                delay(3000)
+                _showCopyrightBlockMessage.value = false
+            }
+            return
+        }
+
         if (hasDetectedMedia.value) {
             val ranked = rankedCandidates.value
             if (ranked.isNotEmpty()) {

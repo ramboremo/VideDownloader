@@ -4,6 +4,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -42,6 +44,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -65,6 +68,7 @@ dependencies {
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.53.1")
+    implementation("com.google.firebase:firebase-crashlytics:20.0.5")
     ksp("com.google.dagger:hilt-android-compiler:2.53.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 

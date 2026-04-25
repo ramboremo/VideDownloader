@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "380744108813",
+    "project_id": "xdownloader-cognitivechaos",
+    "storage_bucket": "xdownloader-cognitivechaos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:380744108813:android:e1265c80f4c92953affe44",
+        "android_client_info": {
+          "package_name": "com.cognitivechaos.xdownload"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0wqSlx98HY55hnmdZK7YA5Jbpe2gn-5Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

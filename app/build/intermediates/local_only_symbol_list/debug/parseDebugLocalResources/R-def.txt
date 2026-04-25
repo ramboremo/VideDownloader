@@ -1,9 +1,23 @@
 R_DEF: Internal format may change without notice
 local
 color ic_launcher_background
+drawable ic_dailymotion
+drawable ic_facebook
+drawable ic_google
+drawable ic_instagram
 drawable ic_launcher_foreground
+drawable ic_twitter
+drawable ic_vimeo
 mipmap ic_launcher
 mipmap ic_launcher_round
 string app_name
+string com.google.firebase.crashlytics.mapping_file_id
+string com.google.firebase.crashlytics.version_control_info
+string gcm_defaultSenderId
+string google_api_key
+string google_app_id
+string google_crash_reporting_api_key
+string google_storage_bucket
+string project_id
 style Theme.VideDownloader
 xml network_security_config

@@ -30,7 +30,7 @@
         <!-- Sample AdMob App ID per Google AdMob documentation to prevent crashes before real ID is available -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-4031401294142199~3256366688"/>
 
         <activity
             android:name=".MainActivity"

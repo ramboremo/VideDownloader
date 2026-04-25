@@ -1,4 +1,4 @@
-﻿package com.cognitivechaos.xdownload.service
+package com.cognitivechaos.xdownload.service
 
 import android.util.Log
 import com.cognitivechaos.xdownload.data.model.DetectedMedia
@@ -92,7 +92,7 @@ class VideoDetector @Inject constructor(
 
     private val detectedUrls = java.util.Collections.synchronizedSet(mutableSetOf<String>())
     private val detectionCounter = java.util.concurrent.atomic.AtomicInteger(0)
-    private var currentPageUrl = ""
+    @Volatile private var currentPageUrl = ""
     private var currentPageTitle = ""
     private var currentPageThumbnail = ""
 
@@ -145,6 +145,26 @@ class VideoDetector @Inject constructor(
                 if (currentPageUrl != triggeredForUrl) return@launch
                 registerSiteExtractorResult(triggeredForUrl, options)
             }
+            isRedtubeVideoPage() -> scope.launch {
+                val options = siteExtractors.extractRedtube(triggeredForUrl)
+                if (currentPageUrl != triggeredForUrl) return@launch
+                registerSiteExtractorResult(triggeredForUrl, options)
+            }
+            isSpankbangVideoPage() -> scope.launch {
+                val options = siteExtractors.extractSpankbang(triggeredForUrl)
+                if (currentPageUrl != triggeredForUrl) return@launch
+                registerSiteExtractorResult(triggeredForUrl, options)
+            }
+            isYoupornVideoPage() -> scope.launch {
+                val options = siteExtractors.extractYouporn(triggeredForUrl)
+                if (currentPageUrl != triggeredForUrl) return@launch
+                registerSiteExtractorResult(triggeredForUrl, options)
+            }
+            isEpornerVideoPage() -> scope.launch {
+                val options = siteExtractors.extractEporner(triggeredForUrl)
+                if (currentPageUrl != triggeredForUrl) return@launch
+                registerSiteExtractorResult(triggeredForUrl, options)
+            }
             else -> null
         }
     }
@@ -184,6 +204,43 @@ class VideoDetector @Inject constructor(
     private fun isPornhubPage(): Boolean {
         return PH_HOSTS.any { currentPageUrl.lowercase().contains(it) }
     }
+
+    /**
+     * Returns true if the current page is a Google-owned domain where downloading is blocked.
+     * Covers YouTube, Google Search, Google Drive, Gmail, and all country-specific Google
+     * domains (google.co.uk, google.de, google.com.br, etc.).
+     *
+     * Uses proper hostname extraction to avoid false positives on non-Google URLs that
+     * might contain "google.com" in a path or query parameter.
+     */
+    private fun isGoogleDomain(): Boolean {
+        val host = try {
+            java.net.URI(currentPageUrl).host?.lowercase() ?: return false
+        } catch (_: Exception) { return false }
+
+        // Google country domains: google.com, google.co.uk, google.de, google.com.br, etc.
+        // Pattern: registered domain is "google.<tld>" or "google.<tld>.<cctld>"
+        val googleCountryPattern = Regex("""(?:^|\.)google\.[a-z]{2,}(?:\.[a-z]{2})?$""")
+        if (googleCountryPattern.containsMatchIn(host)) return true
+
+        // Specific Google-owned domains
+        val googleOwnedDomains = listOf(
+            "youtube.com", "youtu.be", "ytimg.com",
+            "googleapis.com", "googlevideo.com", "googleusercontent.com",
+            "gstatic.com", "ggpht.com",
+            "blogger.com", "blogspot.com"
+        )
+        return googleOwnedDomains.any { domain ->
+            host == domain || host.endsWith(".$domain")
+        }
+    }
+
+    /**
+     * Public check for the UI — returns true if the current page is a domain
+     * where downloading is blocked (e.g. Google/YouTube).
+     * The FAB should show a copyright toast instead of the download sheet.
+     */
+    fun isDownloadBlockedDomain(): Boolean = isGoogleDomain()
 
     /**
      * Check if a URL is a PH get_media API endpoint.
@@ -230,8 +287,44 @@ class VideoDetector @Inject constructor(
         isXhamsterPage() && (currentPageUrl.contains("/videos/", ignoreCase = true) ||
             currentPageUrl.contains("/movies/", ignoreCase = true))
 
+    /** Matches redtube.com, www.redtube.com, it.redtube.com, redtube.com.br */
+    private fun isRedtubePage(): Boolean =
+        Regex("""(?:\w+\.)?redtube\.com(?:\.br)?""").containsMatchIn(currentPageUrl.lowercase())
+
+    /** RedTube video page: numeric ID in path */
+    private fun isRedtubeVideoPage(): Boolean =
+        isRedtubePage() && Regex("""/\d+""").containsMatchIn(currentPageUrl)
+
+    /** Matches spankbang.com, m.spankbang.com */
+    private fun isSpankbangPage(): Boolean =
+        Regex("""(?:[^.]+\.)?spankbang\.com""").containsMatchIn(currentPageUrl.lowercase())
+
+    /** SpankBang video page: /{id}/video or /{id}/play or /{id}/embed */
+    private fun isSpankbangVideoPage(): Boolean =
+        isSpankbangPage() && Regex("""/[\da-z]+/(?:video|play|embed)""").containsMatchIn(currentPageUrl.lowercase())
+
+    /** Matches youporn.com */
+    private fun isYoupornPage(): Boolean =
+        currentPageUrl.lowercase().contains("youporn.com")
+
+    /** YouPorn video page: /watch/{id} */
+    private fun isYoupornVideoPage(): Boolean =
+        isYoupornPage() && currentPageUrl.contains("/watch/", ignoreCase = true)
+
+    /** Matches eporner.com */
+    private fun isEpornerPage(): Boolean =
+        currentPageUrl.lowercase().contains("eporner.com")
+
+    /** Eporner video page: /hd-porn/{id} or /video-{id} */
+    private fun isEpornerVideoPage(): Boolean =
+        isEpornerPage() && (currentPageUrl.contains("/hd-porn/", ignoreCase = true) ||
+            Regex("""/video-\w+""").containsMatchIn(currentPageUrl.lowercase()))
+
     fun onResourceRequest(url: String, mimeType: String? = null): Boolean {
         val lowUrl = url.lowercase()
+
+        // Block all detection on Google-owned domains (YouTube, etc.) — copyright protection
+        if (isGoogleDomain()) return false
 
         // Skip ignored patterns
         if (IGNORE_PATTERNS.any { lowUrl.contains(it) }) return false
@@ -282,6 +375,8 @@ class VideoDetector @Inject constructor(
         if (isPornhubPage()) return false                          // get_media handles PH
         if (isXnxxPage() || isXvideosPage()) return false         // page-fetch handles these
         if (isXhamsterPage()) return false                        // page-fetch handles XHamster too
+        if (isRedtubePage() || isSpankbangPage()) return false    // page-fetch handles these
+        if (isYoupornPage() || isEpornerPage()) return false      // page-fetch handles these
 
         // === Standard media detection ===
         val isMedia = when {
@@ -301,6 +396,13 @@ class VideoDetector @Inject constructor(
         }
 
         if (isMedia && url !in detectedUrls) {
+            // If we already know the file size and it's ≤ 1MB, skip entirely — it's garbage
+            val knownSize = prefetchedFileSizes[url]
+            if (knownSize != null && knownSize <= 1_048_576L) {
+                Log.d(TAG, "Skipped sub-1MB media (${knownSize / 1024}KB): ${url.take(80)}")
+                return false
+            }
+
             detectedUrls.add(url)
             val quality = guessQuality(url)
             val media = DetectedMedia(
@@ -321,13 +423,23 @@ class VideoDetector @Inject constructor(
 
             Log.d(TAG, "Detected media: $quality - ${url.take(100)}")
 
-            // Pre-fetch file size in background so it's ready when user clicks download FAB
+            // Pre-fetch file size in background — prune if below 1MB (garbage/ads/segments)
             scope.launch {
                 try {
                     val size = getFileSizeSmart(url)
                     if (size != null && size > 0) {
-                        prefetchedFileSizes[url] = size
-                        Log.d(TAG, "Pre-fetched file size for ${url.take(60)}: ${size / 1_048_576}MB")
+                        if (size <= 1_048_576L) {
+                            // Below 1MB — remove from detected list, it's garbage
+                            Log.d(TAG, "Pruned sub-1MB media (${size / 1024}KB): ${url.take(80)}")
+                            detectedUrls.remove(url)
+                            val pruned = _detectedMedia.value.toMutableList()
+                            pruned.removeAll { it.url == url }
+                            _detectedMedia.value = pruned
+                            if (pruned.isEmpty()) _hasMedia.value = false
+                        } else {
+                            prefetchedFileSizes[url] = size
+                            Log.d(TAG, "Pre-fetched file size for ${url.take(60)}: ${size / 1_048_576}MB")
+                        }
                     }
                 } catch (e: Exception) {
                     Log.d(TAG, "Pre-fetch file size failed: ${e.message}")
