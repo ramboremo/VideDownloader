@@ -28,6 +28,7 @@ class AppPreferences @Inject constructor(
         private val HIDE_TOOLBAR_LABEL = booleanPreferencesKey("hide_toolbar_label")
         private val STORAGE_PATH = stringPreferencesKey("storage_path")
         private val PRIVATE_FOLDER_PIN = stringPreferencesKey("private_folder_pin")
+        private val ONBOARDING_SEEN = booleanPreferencesKey("onboarding_seen")
     }
 
     val wifiOnly: Flow<Boolean> = context.dataStore.data.map { it[WIFI_ONLY] ?: false }
@@ -40,6 +41,7 @@ class AppPreferences @Inject constructor(
         it[STORAGE_PATH] ?: context.getExternalFilesDir(null)?.absolutePath ?: ""
     }
     val privateFolderPin: Flow<String> = context.dataStore.data.map { it[PRIVATE_FOLDER_PIN] ?: "" }
+    val onboardingSeen: Flow<Boolean> = context.dataStore.data.map { it[ONBOARDING_SEEN] ?: false }
 
     suspend fun setWifiOnly(value: Boolean) {
         context.dataStore.edit { it[WIFI_ONLY] = value }
@@ -67,6 +69,10 @@ class AppPreferences @Inject constructor(
 
     suspend fun setStoragePath(value: String) {
         context.dataStore.edit { it[STORAGE_PATH] = value }
+    }
+
+    suspend fun setOnboardingSeen() {
+        context.dataStore.edit { it[ONBOARDING_SEEN] = true }
     }
 
     suspend fun setPrivateFolderPin(value: String) {

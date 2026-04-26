@@ -214,6 +214,7 @@ drawable abc_vector_test
 drawable admob_close_button_black_circle_white_cross
 drawable admob_close_button_white_circle_black_cross
 drawable admob_close_button_white_cross
+drawable ai_woman
 drawable common_full_open_on_phone
 drawable common_google_signin_btn_icon_dark
 drawable common_google_signin_btn_icon_dark_focused
@@ -843,6 +844,7 @@ styleable RecyclerView android_orientation android_clipToPadding android_descend
 styleable SignInButton buttonSize colorScheme scopeUris
 styleable StateListDrawable android_dither android_visible android_variablePadding android_constantSize android_enterFadeDuration android_exitFadeDuration
 styleable StateListDrawableItem android_drawable
+xml file_paths
 xml gma_ad_services_config
 xml image_share_filepaths
 xml network_security_config

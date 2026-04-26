@@ -16,8 +16,8 @@ android {
         applicationId = "com.cognitivechaos.xdownload"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -68,7 +68,9 @@ dependencies {
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.53.1")
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-crashlytics:20.0.5")
+    implementation("com.google.firebase:firebase-config")
     ksp("com.google.dagger:hilt-android-compiler:2.53.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 

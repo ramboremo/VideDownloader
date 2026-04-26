@@ -1,6 +1,7 @@
 R_DEF: Internal format may change without notice
 local
 color ic_launcher_background
+drawable ai_woman
 drawable ic_dailymotion
 drawable ic_facebook
 drawable ic_google
@@ -20,4 +21,5 @@ string google_crash_reporting_api_key
 string google_storage_bucket
 string project_id
 style Theme.VideDownloader
+xml file_paths
 xml network_security_config

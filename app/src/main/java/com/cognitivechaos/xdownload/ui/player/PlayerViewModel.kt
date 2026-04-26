@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,17 +36,22 @@ class PlayerViewModel @Inject constructor(
 
     private fun loadDownload() {
         viewModelScope.launch {
-            try {
-                val entity = downloadDao.getDownloadById(downloadId)
-                _download.value = entity
-                if (entity == null) {
-                    _error.value = "Video not found"
-                }
-            } catch (e: Exception) {
-                _error.value = e.message ?: "Failed to load video"
-            } finally {
+            if (downloadId.isBlank()) {
+                _error.value = "File not found"
                 _isLoading.value = false
+                return@launch
             }
+
+            downloadDao.observeDownloadById(downloadId)
+                .catch { e ->
+                    _error.value = e.message ?: "Failed to load file"
+                    _isLoading.value = false
+                }
+                .collect { entity ->
+                    _download.value = entity
+                    _error.value = if (entity == null) "File not found" else null
+                    _isLoading.value = false
+                }
         }
     }
 }

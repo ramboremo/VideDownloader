@@ -9,8 +9,10 @@ import com.cognitivechaos.xdownload.data.db.BookmarkEntity
 import com.cognitivechaos.xdownload.data.db.HistoryDao
 import com.cognitivechaos.xdownload.data.db.HistoryEntity
 import com.cognitivechaos.xdownload.data.model.BrowserTab
+import com.cognitivechaos.xdownload.data.model.ContextMenuTarget
 import com.cognitivechaos.xdownload.data.model.DetectedMedia
 import com.cognitivechaos.xdownload.data.model.MediaQualityOption
+import com.cognitivechaos.xdownload.data.model.PendingGeneralDownload
 import com.cognitivechaos.xdownload.data.preferences.AppPreferences
 import com.cognitivechaos.xdownload.service.AdBlocker
 import com.cognitivechaos.xdownload.service.DownloadService
@@ -35,6 +37,7 @@ class BrowserViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "BrowserViewModel"
+        private const val WEBVIEW_VIDEO_TYPE = 10
     }
 
     // Tab management
@@ -129,6 +132,15 @@ class BrowserViewModel @Inject constructor(
     // Background prefetch so the sheet is instant on click.
     private var qualityPrefetchJob: Job? = null
     private var lastPrefetchedUrl: String? = null
+
+    // Context menu state
+    private val _contextMenuTarget = MutableStateFlow<ContextMenuTarget?>(null)
+    val contextMenuTarget: StateFlow<ContextMenuTarget?> = _contextMenuTarget.asStateFlow()
+
+    // General download banner state
+    private val _pendingGeneralDownload = MutableStateFlow<PendingGeneralDownload?>(null)
+    val pendingGeneralDownload: StateFlow<PendingGeneralDownload?> = _pendingGeneralDownload.asStateFlow()
+    private var bannerAutoDismissJob: Job? = null
 
     // Menu state
     private val _showMenu = MutableStateFlow(false)
@@ -250,6 +262,8 @@ class BrowserViewModel @Inject constructor(
         _currentUrl.value = url
         videoDetector.clearDetectedMedia()
         videoDetector.setCurrentPage(url, _currentTitle.value)
+        dismissContextMenu()
+        dismissGeneralDownload()
     }
 
     fun onPageFinished(tabId: String, url: String) {
@@ -667,6 +681,248 @@ class BrowserViewModel @Inject constructor(
             }.flowOn(Dispatchers.IO)
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    // Context menu functions
+
+    fun onLongPress(result: android.webkit.WebView.HitTestResult) {
+        val extra = result.extra
+        val videoExtensions = setOf("mp4", "webm", "mkv", "m3u8", "avi", "mov", "flv", "wmv")
+
+        when (result.type) {
+            WEBVIEW_VIDEO_TYPE -> {
+                if (!extra.isNullOrBlank()) {
+                    _contextMenuTarget.value = ContextMenuTarget.Video(extra)
+                } else {
+                    dismissContextMenu()
+                }
+            }
+            android.webkit.WebView.HitTestResult.SRC_ANCHOR_TYPE -> {
+                if (extra.isNullOrBlank()) {
+                    dismissContextMenu()
+                    return
+                }
+                val pathBeforeQuery = extra.substringBefore("?")
+                val ext = pathBeforeQuery.substringAfterLast(".", "").lowercase()
+                if (ext in videoExtensions) {
+                    _contextMenuTarget.value = ContextMenuTarget.Video(extra)
+                } else {
+                    _contextMenuTarget.value = ContextMenuTarget.Link(extra)
+                }
+            }
+            android.webkit.WebView.HitTestResult.IMAGE_TYPE -> {
+                if (!extra.isNullOrBlank()) {
+                    _contextMenuTarget.value = ContextMenuTarget.Image(extra)
+                } else {
+                    dismissContextMenu()
+                }
+            }
+            android.webkit.WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE -> {
+                if (!extra.isNullOrBlank()) {
+                    _contextMenuTarget.value = ContextMenuTarget.LinkAndImage(
+                        linkUrl = extra,
+                        imageUrl = extra
+                    )
+                } else {
+                    dismissContextMenu()
+                }
+            }
+            android.webkit.WebView.HitTestResult.UNKNOWN_TYPE,
+            android.webkit.WebView.HitTestResult.EDIT_TEXT_TYPE -> {
+                dismissContextMenu()
+            }
+            else -> {
+                dismissContextMenu()
+            }
+        }
+    }
+
+    fun showLinkAndImageContextMenu(linkUrl: String, imageUrl: String) {
+        if (linkUrl.isBlank() && imageUrl.isBlank()) {
+            dismissContextMenu()
+            return
+        }
+        _contextMenuTarget.value = ContextMenuTarget.LinkAndImage(
+            linkUrl = linkUrl.ifBlank { imageUrl },
+            imageUrl = imageUrl.ifBlank { linkUrl }
+        )
+    }
+
+    fun dismissContextMenu() {
+        _contextMenuTarget.value = null
+    }
+
+    fun downloadContextMenuTarget() {
+        val target = _contextMenuTarget.value ?: return
+        val (url, mimeType) = when (target) {
+            is ContextMenuTarget.Link -> Pair(target.url, "application/octet-stream")
+            is ContextMenuTarget.Image -> Pair(target.imageUrl, "image/*")
+            is ContextMenuTarget.Video -> Pair(target.videoUrl, "video/mp4")
+            is ContextMenuTarget.LinkAndImage -> Pair(target.linkUrl, "application/octet-stream")
+        }
+        val fileName = url.substringBefore("?").substringAfterLast("/")
+            .ifBlank { "download_${System.currentTimeMillis()}" }
+        DownloadService.startDownload(
+            context = getApplication(),
+            url = url,
+            fileName = fileName,
+            quality = "",
+            sourceUrl = _currentUrl.value,
+            sourceTitle = _currentTitle.value,
+            mimeType = mimeType,
+            thumbnailUrl = ""
+        )
+        dismissContextMenu()
+    }
+
+    fun downloadContextMenuUrl(url: String, mimeType: String = "application/octet-stream") {
+        if (url.isBlank()) return
+        val fileName = inferFileName(url, null)
+        DownloadService.startDownload(
+            context = getApplication(),
+            url = url,
+            fileName = fileName,
+            quality = "",
+            sourceUrl = _currentUrl.value,
+            sourceTitle = _currentTitle.value,
+            mimeType = mimeType,
+            thumbnailUrl = ""
+        )
+        dismissContextMenu()
+    }
+
+    fun openContextMenuTargetInNewTab() {
+        val target = _contextMenuTarget.value ?: return
+        val url = when (target) {
+            is ContextMenuTarget.Link -> target.url
+            is ContextMenuTarget.Image -> target.imageUrl
+            is ContextMenuTarget.Video -> target.videoUrl
+            is ContextMenuTarget.LinkAndImage -> target.linkUrl
+        }
+        addNewTab()
+        navigateTo(url)
+        dismissContextMenu()
+    }
+
+    fun openUrlInNewTab(url: String) {
+        if (url.isBlank()) return
+        addNewTab()
+        navigateTo(url)
+        dismissContextMenu()
+    }
+
+    internal fun inferFileName(url: String, contentDisposition: String?): String {
+        // 1. Try Content-Disposition filename= or filename*=
+        if (!contentDisposition.isNullOrBlank()) {
+            val filenameStarMatch = Regex("""filename\*\s*=\s*(?:[^']*'')?(.+)""", RegexOption.IGNORE_CASE)
+                .find(contentDisposition)
+            if (filenameStarMatch != null) {
+                val name = java.net.URLDecoder.decode(filenameStarMatch.groupValues[1].trim().trim('"'), "UTF-8")
+                if (name.isNotBlank()) return name
+            }
+            val filenameMatch = Regex("""filename\s*=\s*"?([^";]+)"?""", RegexOption.IGNORE_CASE)
+                .find(contentDisposition)
+            if (filenameMatch != null) {
+                val name = filenameMatch.groupValues[1].trim()
+                if (name.isNotBlank()) return name
+            }
+        }
+        // 2. Last path segment of URL (before ?)
+        val pathSegment = url.substringBefore("?").substringAfterLast("/")
+        if (pathSegment.isNotBlank()) return pathSegment
+        // 3. Fallback
+        return "download_${System.currentTimeMillis()}"
+    }
+
+    internal fun ensureExtension(fileName: String, mimeType: String): String {
+        val safeFileName = fileName.ifBlank { "download_${System.currentTimeMillis()}" }
+        val knownExtensions = setOf("pdf","zip","apk","jpg","jpeg","png","gif","webp","mp4","mp3","doc","docx","xls","xlsx","ppt","pptx","txt","csv","json","xml","html","htm")
+        val currentExt = safeFileName.substringAfterLast(".", "").lowercase()
+        if (currentExt in knownExtensions) return safeFileName
+        val cleanMimeType = mimeType.lowercase().substringBefore(";").trim()
+        val mimeToExt = mapOf(
+            "application/pdf" to "pdf",
+            "application/zip" to "zip",
+            "application/x-zip-compressed" to "zip",
+            "application/vnd.android.package-archive" to "apk",
+            "image/jpeg" to "jpg",
+            "image/png" to "png",
+            "image/gif" to "gif",
+            "image/webp" to "webp",
+            "text/plain" to "txt",
+            "text/html" to "html",
+            "text/csv" to "csv",
+            "application/json" to "json",
+            "application/xml" to "xml"
+        )
+        val ext = mimeToExt[cleanMimeType]
+            ?: cleanMimeType.substringAfter("/").trim().takeIf { it.isNotBlank() && it.length <= 5 && it.all { ch -> ch.isLetterOrDigit() } }
+            ?: "bin"
+        return "$safeFileName.$ext"
+    }
+
+    internal fun mimeTypeToLabel(mimeType: String): String {
+        val lower = mimeType.lowercase().substringBefore(";").trim()
+        return when {
+            lower == "application/pdf" -> "PDF Document"
+            lower == "application/zip" || lower == "application/x-zip-compressed" -> "ZIP Archive"
+            lower == "application/vnd.android.package-archive" -> "APK File"
+            lower.startsWith("image/") -> "Image"
+            lower.startsWith("text/") -> "Text File"
+            lower.startsWith("audio/") -> "Audio File"
+            lower.startsWith("video/") -> "Video"
+            lower == "application/octet-stream" -> "File"
+            else -> "File"
+        }
+    }
+
+    fun onGeneralDownloadIntercepted(
+        url: String,
+        contentDisposition: String?,
+        mimeType: String,
+        contentLength: Long
+    ) {
+        if (url.isBlank()) return
+        val cleanMimeType = mimeType.substringBefore(";").trim()
+        if (cleanMimeType.startsWith("video/", ignoreCase = true) || cleanMimeType.startsWith("audio/", ignoreCase = true)) return
+        val rawName = inferFileName(url, contentDisposition)
+        val fileName = ensureExtension(rawName, cleanMimeType)
+        val fileSize = if (contentLength > 0) contentLength else null
+        _pendingGeneralDownload.value = PendingGeneralDownload(
+            url = url,
+            fileName = fileName,
+            mimeType = cleanMimeType.ifBlank { "application/octet-stream" },
+            fileSize = fileSize,
+            sourceUrl = _currentUrl.value
+        )
+        bannerAutoDismissJob?.cancel()
+        bannerAutoDismissJob = viewModelScope.launch {
+            delay(30_000L)
+            dismissGeneralDownload()
+        }
+    }
+
+    fun confirmGeneralDownload() {
+        val pending = _pendingGeneralDownload.value ?: return
+        bannerAutoDismissJob?.cancel()
+        bannerAutoDismissJob = null
+        DownloadService.startDownload(
+            context = getApplication(),
+            url = pending.url,
+            fileName = pending.fileName,
+            quality = "",
+            sourceUrl = pending.sourceUrl,
+            sourceTitle = pending.fileName,
+            mimeType = pending.mimeType,
+            thumbnailUrl = ""
+        )
+        _pendingGeneralDownload.value = null
+    }
+
+    fun dismissGeneralDownload() {
+        bannerAutoDismissJob?.cancel()
+        bannerAutoDismissJob = null
+        _pendingGeneralDownload.value = null
+    }
 
     private fun cancelQualityFetch() {
         qualityFetchJob?.cancel()

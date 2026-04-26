@@ -9,7 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +28,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.cognitivechaos.xdownload.ui.files.DownloadFileActions
+import com.cognitivechaos.xdownload.ui.files.FilesViewModel
 import com.cognitivechaos.xdownload.ui.theme.Orange500
 import java.io.File
 
@@ -36,12 +38,14 @@ import java.io.File
 fun VideoPlayerScreen(
     downloadId: String,
     viewModel: PlayerViewModel = hiltViewModel(),
+    filesViewModel: FilesViewModel = hiltViewModel(),
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val download by viewModel.download.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    var showMenu by remember { mutableStateOf(false) }
 
     // Fullscreen state
     var isFullscreen by remember { mutableStateOf(false) }
@@ -136,6 +140,38 @@ fun VideoPlayerScreen(
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        }
+                    },
+                    actions = {
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More", tint = Color.White)
+                            }
+                            DownloadViewerMenu(
+                                expanded = showMenu,
+                                download = download,
+                                onDismiss = { showMenu = false },
+                                onOpenWith = {
+                                    showMenu = false
+                                    download?.let { DownloadFileActions.openWith(context, it) }
+                                },
+                                onShare = {
+                                    showMenu = false
+                                    download?.let { DownloadFileActions.share(context, it) }
+                                },
+                                onSyncToGallery = {
+                                    showMenu = false
+                                    download?.let { filesViewModel.syncToGallery(it) }
+                                },
+                                onMoveToPrivate = {
+                                    showMenu = false
+                                    download?.let { filesViewModel.moveToPrivate(it) }
+                                },
+                                onRemoveFromPrivate = {
+                                    showMenu = false
+                                    download?.let { filesViewModel.removeFromPrivate(it) }
+                                }
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(

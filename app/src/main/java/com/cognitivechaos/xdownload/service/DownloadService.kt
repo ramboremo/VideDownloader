@@ -146,10 +146,16 @@ class DownloadService : Service() {
      * Returns a unique file: if "name.ext" already exists, tries "name (1).ext", "name (2).ext", etc.
      */
     private fun getUniqueFile(dir: File, baseName: String, extension: String): File {
-        var file = File(dir, "$baseName.$extension")
+        val suffix = ".$extension"
+        val normalizedBaseName = if (baseName.endsWith(suffix, ignoreCase = true)) {
+            baseName.dropLast(suffix.length)
+        } else {
+            baseName
+        }
+        var file = File(dir, "$normalizedBaseName.$extension")
         var counter = 1
         while (file.exists()) {
-            file = File(dir, "$baseName ($counter).$extension")
+            file = File(dir, "$normalizedBaseName ($counter).$extension")
             counter++
         }
         return file
@@ -195,7 +201,7 @@ class DownloadService : Service() {
         val downloadId = UUID.randomUUID().toString()
         val downloadDir = getDownloadDirectory()
         val sanitizedName = sanitizeFileName(fileName)
-        val extension = getExtension(mimeType, url)
+        val extension = getExtension(mimeType, url, sanitizedName)
         // Bug fix #11: Prevent filename collisions
         val file = getUniqueFile(downloadDir, sanitizedName, extension)
 
@@ -557,22 +563,56 @@ class DownloadService : Service() {
         return name.replace(Regex("[^a-zA-Z0-9._\\- ]"), "_")
             .take(100)
             .trim()
-            .ifEmpty { "video_${System.currentTimeMillis()}" }
+            .ifEmpty { "download_${System.currentTimeMillis()}" }
     }
 
-    private fun getExtension(mimeType: String, url: String): String {
-        // Try to get from URL first
+    private fun getExtension(mimeType: String, url: String, fileName: String): String {
+        val knownExtensions = setOf(
+            "mp4", "webm", "mkv", "m3u8", "avi", "mov", "flv", "wmv",
+            "mp3", "m4a", "aac", "flac", "ogg", "wav",
+            "pdf", "zip", "apk", "jpg", "jpeg", "png", "gif", "webp",
+            "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+            "txt", "csv", "json", "xml", "html", "htm"
+        )
+
+        val fileNameExt = fileName.substringAfterLast(".", "")
+            .lowercase().take(5)
+        if (fileNameExt in knownExtensions) {
+            return fileNameExt
+        }
+
+        // Try to get from URL next
         val urlExt = url.substringBefore("?").substringAfterLast(".", "")
             .lowercase().take(5)
-        if (urlExt in listOf("mp4", "webm", "mkv", "avi", "mov", "mp3", "m4a", "aac")) {
+        if (urlExt in knownExtensions) {
             return urlExt
         }
         // Fall back to MIME type
+        val cleanMimeType = mimeType.lowercase().substringBefore(";").trim()
         return when {
-            mimeType.contains("mp4") -> "mp4"
-            mimeType.contains("webm") -> "webm"
-            mimeType.contains("audio") -> "mp3"
-            else -> "mp4"
+            cleanMimeType == "application/pdf" -> "pdf"
+            cleanMimeType == "application/zip" || cleanMimeType == "application/x-zip-compressed" -> "zip"
+            cleanMimeType == "application/vnd.android.package-archive" -> "apk"
+            cleanMimeType == "application/msword" -> "doc"
+            cleanMimeType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> "docx"
+            cleanMimeType == "application/vnd.ms-excel" -> "xls"
+            cleanMimeType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" -> "xlsx"
+            cleanMimeType == "application/vnd.ms-powerpoint" -> "ppt"
+            cleanMimeType == "application/vnd.openxmlformats-officedocument.presentationml.presentation" -> "pptx"
+            cleanMimeType == "application/json" -> "json"
+            cleanMimeType == "application/xml" -> "xml"
+            cleanMimeType.contains("mp4") -> "mp4"
+            cleanMimeType.contains("webm") -> "webm"
+            cleanMimeType.contains("audio") -> "mp3"
+            cleanMimeType.startsWith("image/jpeg") -> "jpg"
+            cleanMimeType.startsWith("image/png") -> "png"
+            cleanMimeType.startsWith("image/gif") -> "gif"
+            cleanMimeType.startsWith("image/webp") -> "webp"
+            cleanMimeType.startsWith("image/") -> "jpg"
+            cleanMimeType.startsWith("text/html") -> "html"
+            cleanMimeType.startsWith("text/csv") -> "csv"
+            cleanMimeType.startsWith("text/") -> "txt"
+            else -> "bin"
         }
     }
 

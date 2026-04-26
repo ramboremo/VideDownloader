@@ -14,6 +14,9 @@ interface DownloadDao {
     @Query("SELECT * FROM downloads WHERE id = :id")
     suspend fun getDownloadById(id: String): DownloadEntity?
 
+    @Query("SELECT * FROM downloads WHERE id = :id")
+    fun observeDownloadById(id: String): Flow<DownloadEntity?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDownload(download: DownloadEntity)
 

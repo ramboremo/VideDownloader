@@ -2,7 +2,12 @@
 package com.cognitivechaos.xdownload.ui.browser
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Bitmap
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
 import android.view.ViewGroup
 import android.webkit.*
 import androidx.activity.compose.BackHandler
@@ -32,8 +37,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -43,8 +51,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cognitivechaos.xdownload.data.db.HistoryEntity
+import com.cognitivechaos.xdownload.data.model.ContextMenuTarget
+import com.cognitivechaos.xdownload.data.model.PendingGeneralDownload
 import com.cognitivechaos.xdownload.service.VideoDetector
 import com.cognitivechaos.xdownload.ui.theme.Orange500
+import coil.compose.AsyncImage
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import java.text.SimpleDateFormat
@@ -68,6 +79,8 @@ val quickAccessSites = listOf(
     QuickAccessSite("Facebook", "https://www.facebook.com", Color(0xFF1877F2), R.drawable.ic_facebook),
     QuickAccessSite("Instagram", "https://www.instagram.com", Color(0xFFE4405F), R.drawable.ic_instagram),
 )
+
+private const val WEBVIEW_VIDEO_HIT_TYPE = 10
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,10 +116,13 @@ fun BrowserScreen(
     val isNetworkError by viewModel.isNetworkError.collectAsState()
     val networkErrorCode by viewModel.networkErrorCode.collectAsState()
     val networkErrorDescription by viewModel.networkErrorDescription.collectAsState()
+    val contextMenuTarget by viewModel.contextMenuTarget.collectAsState()
+    val pendingGeneralDownload by viewModel.pendingGeneralDownload.collectAsState()
 
     var urlInput by remember { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
 
     // --- Per-tab WebView management ---
     // Each tab gets its own WebView instance so it retains its own back stack,
@@ -231,6 +247,8 @@ fun BrowserScreen(
     BackHandler(enabled = true) {
         val activeWv = if (isIncognito) incognitoWebView else webView
         when {
+            contextMenuTarget != null -> viewModel.dismissContextMenu()
+            pendingGeneralDownload != null -> viewModel.dismissGeneralDownload()
             showQualitySheet -> viewModel.dismissQualitySheet()
             showTabManager -> viewModel.dismissTabManager()
             showBookmarks -> viewModel.dismissBookmarks()
@@ -587,6 +605,16 @@ fun BrowserScreen(
                     }
                 }
 
+                DownloadBanner(
+                    pendingDownload = pendingGeneralDownload,
+                    typeLabel = pendingGeneralDownload?.let { viewModel.mimeTypeToLabel(it.mimeType) } ?: "File",
+                    onDownload = { viewModel.confirmGeneralDownload() },
+                    onDismiss = { viewModel.dismissGeneralDownload() },
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                )
+
                 // Floating download button
                 FloatingDownloadButton(
                     hasMedia = hasMedia && !isBlockedDomain,
@@ -764,6 +792,26 @@ fun BrowserScreen(
                 onDownload = { option -> viewModel.startDownload(option) }
             )
         }
+
+        ContextMenuBottomSheet(
+            target = contextMenuTarget,
+            onDismiss = { viewModel.dismissContextMenu() },
+            onOpenUrl = { url -> viewModel.openUrlInNewTab(url) },
+            onDownloadUrl = { url, mimeType -> viewModel.downloadContextMenuUrl(url, mimeType) },
+            onCopyUrl = { label, url ->
+                clipboardManager.setText(AnnotatedString(url))
+                android.widget.Toast.makeText(context, "$label copied", android.widget.Toast.LENGTH_SHORT).show()
+                viewModel.dismissContextMenu()
+            },
+            onShareUrl = { url ->
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, url)
+                }
+                context.startActivity(Intent.createChooser(shareIntent, "Share"))
+                viewModel.dismissContextMenu()
+            }
+        )
 
         // Tab manager overlay
         if (showTabManager) {
@@ -980,6 +1028,48 @@ fun WebViewContent(
                     "Android"
                 )
 
+                setOnLongClickListener {
+                    val result = hitTestResult
+                    when (result.type) {
+                        WebView.HitTestResult.SRC_ANCHOR_TYPE,
+                        WebView.HitTestResult.IMAGE_TYPE,
+                        WEBVIEW_VIDEO_HIT_TYPE -> {
+                            viewModel.onLongPress(result)
+                            true
+                        }
+                        WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE -> {
+                            val handler = Handler(Looper.getMainLooper()) { message ->
+                                val data: Bundle = message.data
+                                val linkUrl = data.getString("url").orEmpty()
+                                val imageUrl = data.getString("src").orEmpty()
+                                viewModel.showLinkAndImageContextMenu(linkUrl, imageUrl)
+                                true
+                            }
+                            val message = Message.obtain(handler)
+                            requestFocusNodeHref(message)
+                            true
+                        }
+                        WebView.HitTestResult.UNKNOWN_TYPE,
+                        WebView.HitTestResult.EDIT_TEXT_TYPE -> {
+                            viewModel.dismissContextMenu()
+                            false
+                        }
+                        else -> {
+                            viewModel.dismissContextMenu()
+                            false
+                        }
+                    }
+                }
+
+                setDownloadListener { url, _, contentDisposition, mimeType, contentLength ->
+                    viewModel.onGeneralDownloadIntercepted(
+                        url = url.orEmpty(),
+                        contentDisposition = contentDisposition,
+                        mimeType = mimeType ?: "application/octet-stream",
+                        contentLength = contentLength
+                    )
+                }
+
                 webViewClient = object : WebViewClient() {
 
                     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
@@ -1145,6 +1235,283 @@ fun WebViewContent(
         },
         modifier = Modifier.fillMaxSize()
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ContextMenuBottomSheet(
+    target: ContextMenuTarget?,
+    onDismiss: () -> Unit,
+    onOpenUrl: (String) -> Unit,
+    onDownloadUrl: (String, String) -> Unit,
+    onCopyUrl: (String, String) -> Unit,
+    onShareUrl: (String) -> Unit
+) {
+    if (target == null) return
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp)
+        ) {
+            when (target) {
+                is ContextMenuTarget.Link -> {
+                    ContextMenuUrlSubtitle(url = target.url)
+                    LinkActionGroup(
+                        url = target.url,
+                        onOpenUrl = onOpenUrl,
+                        onDownloadUrl = onDownloadUrl,
+                        onCopyUrl = onCopyUrl,
+                        onShareUrl = onShareUrl
+                    )
+                }
+                is ContextMenuTarget.Image -> {
+                    ContextMenuImagePreview(imageUrl = target.imageUrl)
+                    ImageActionGroup(
+                        imageUrl = target.imageUrl,
+                        onOpenUrl = onOpenUrl,
+                        onDownloadUrl = onDownloadUrl,
+                        onCopyUrl = onCopyUrl,
+                        onShareUrl = onShareUrl
+                    )
+                }
+                is ContextMenuTarget.LinkAndImage -> {
+                    ContextMenuUrlSubtitle(url = target.linkUrl)
+                    LinkActionGroup(
+                        url = target.linkUrl,
+                        onOpenUrl = onOpenUrl,
+                        onDownloadUrl = onDownloadUrl,
+                        onCopyUrl = onCopyUrl,
+                        onShareUrl = onShareUrl
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                    ContextMenuImagePreview(imageUrl = target.imageUrl)
+                    ImageActionGroup(
+                        imageUrl = target.imageUrl,
+                        onOpenUrl = onOpenUrl,
+                        onDownloadUrl = onDownloadUrl,
+                        onCopyUrl = onCopyUrl,
+                        onShareUrl = onShareUrl
+                    )
+                }
+                is ContextMenuTarget.Video -> {
+                    ContextMenuUrlSubtitle(url = target.videoUrl)
+                    ContextMenuActionRow(
+                        icon = Icons.Default.Download,
+                        label = "Download video",
+                        onClick = { onDownloadUrl(target.videoUrl, "video/mp4") }
+                    )
+                    ContextMenuActionRow(
+                        icon = Icons.Default.ContentCopy,
+                        label = "Copy video URL",
+                        onClick = { onCopyUrl("Video URL", target.videoUrl) }
+                    )
+                    ContextMenuActionRow(
+                        icon = Icons.Default.Share,
+                        label = "Share video",
+                        onClick = { onShareUrl(target.videoUrl) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContextMenuUrlSubtitle(url: String) {
+    Text(
+        text = url,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.padding(bottom = 8.dp)
+    )
+}
+
+@Composable
+private fun ContextMenuImagePreview(imageUrl: String) {
+    AsyncImage(
+        model = imageUrl,
+        contentDescription = "Image preview",
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+    )
+    Spacer(modifier = Modifier.height(10.dp))
+}
+
+@Composable
+private fun LinkActionGroup(
+    url: String,
+    onOpenUrl: (String) -> Unit,
+    onDownloadUrl: (String, String) -> Unit,
+    onCopyUrl: (String, String) -> Unit,
+    onShareUrl: (String) -> Unit
+) {
+    ContextMenuActionRow(
+        icon = Icons.Default.OpenInNew,
+        label = "Open in new tab",
+        onClick = { onOpenUrl(url) }
+    )
+    ContextMenuActionRow(
+        icon = Icons.Default.ContentCopy,
+        label = "Copy link address",
+        onClick = { onCopyUrl("Link address", url) }
+    )
+    ContextMenuActionRow(
+        icon = Icons.Default.Download,
+        label = "Download link",
+        onClick = { onDownloadUrl(url, "application/octet-stream") }
+    )
+    ContextMenuActionRow(
+        icon = Icons.Default.Share,
+        label = "Share link",
+        onClick = { onShareUrl(url) }
+    )
+}
+
+@Composable
+private fun ImageActionGroup(
+    imageUrl: String,
+    onOpenUrl: (String) -> Unit,
+    onDownloadUrl: (String, String) -> Unit,
+    onCopyUrl: (String, String) -> Unit,
+    onShareUrl: (String) -> Unit
+) {
+    ContextMenuActionRow(
+        icon = Icons.Default.Image,
+        label = "Open image in new tab",
+        onClick = { onOpenUrl(imageUrl) }
+    )
+    ContextMenuActionRow(
+        icon = Icons.Default.ContentCopy,
+        label = "Copy image URL",
+        onClick = { onCopyUrl("Image URL", imageUrl) }
+    )
+    ContextMenuActionRow(
+        icon = Icons.Default.Download,
+        label = "Download image",
+        onClick = { onDownloadUrl(imageUrl, "image/*") }
+    )
+    ContextMenuActionRow(
+        icon = Icons.Default.Share,
+        label = "Share image",
+        onClick = { onShareUrl(imageUrl) }
+    )
+}
+
+@Composable
+private fun ContextMenuActionRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = Orange500,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DownloadBanner(
+    pendingDownload: PendingGeneralDownload?,
+    typeLabel: String,
+    onDownload: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = pendingDownload != null,
+        enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+        modifier = modifier
+    ) {
+        val download = pendingDownload ?: return@AnimatedVisibility
+        val dismissState = rememberSwipeToDismissBoxState(
+            confirmValueChange = { value ->
+                if (value != SwipeToDismissBoxValue.Settled) {
+                    onDismiss()
+                    true
+                } else {
+                    false
+                }
+            }
+        )
+
+        SwipeToDismissBox(
+            state = dismissState,
+            backgroundContent = {},
+            content = {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 6.dp,
+                    shadowElevation = 6.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.InsertDriveFile,
+                            contentDescription = null,
+                            tint = Orange500,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = download.fileName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "$typeLabel - ${download.fileSize?.let { formatBytes(it) } ?: "Unknown size"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        TextButton(onClick = onDownload) {
+                            Text("Download", color = Orange500, fontWeight = FontWeight.Bold)
+                        }
+                        IconButton(onClick = onDismiss) {
+                            Icon(Icons.Default.Close, contentDescription = "Dismiss")
+                        }
+                    }
+                }
+            }
+        )
+    }
 }
 
 @Composable

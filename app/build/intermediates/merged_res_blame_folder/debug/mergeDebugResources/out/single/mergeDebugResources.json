@@ -1,23 +1,35 @@
 [
     {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\mipmap-xxxhdpi_ic_launcher_round.png.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\mipmap-xxxhdpi\\ic_launcher_round.png"
-    },
-    {
         "merged": "com.cognitivechaos.xdownload.app-debug-88:/drawable_ic_google.png.flat",
         "source": "com.cognitivechaos.xdownload.app-main-90:/drawable/ic_google.png"
     },
     {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\mipmap-xxxhdpi\\ic_launcher.png"
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/mipmap-mdpi/ic_launcher_round.png"
     },
     {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\mipmap-mdpi_ic_launcher.png.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\mipmap-mdpi\\ic_launcher.png"
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/mipmap-mdpi/ic_launcher.png"
     },
     {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\mipmap-xhdpi_ic_launcher_round.png.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\mipmap-xhdpi\\ic_launcher_round.png"
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/xml_file_paths.xml.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/xml/file_paths.xml"
     },
     {
         "merged": "com.cognitivechaos.xdownload.app-debug-88:/drawable_ic_dailymotion.png.flat",
@@ -28,47 +40,43 @@
         "source": "com.cognitivechaos.xdownload.app-main-90:/drawable/ic_instagram.png"
     },
     {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\mipmap-xhdpi_ic_launcher.png.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\mipmap-xhdpi\\ic_launcher.png"
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/drawable_ai_woman.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/drawable/ai_woman.png"
     },
     {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\drawable_ic_launcher_foreground.xml.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\drawable\\ic_launcher_foreground.xml"
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/xml_network_security_config.xml.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/xml/network_security_config.xml"
+    },
+    {
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/mipmap-xxxhdpi/ic_launcher.png"
     },
     {
         "merged": "com.cognitivechaos.xdownload.app-debug-88:/drawable_ic_vimeo.png.flat",
         "source": "com.cognitivechaos.xdownload.app-main-90:/drawable/ic_vimeo.png"
     },
     {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\mipmap-hdpi_ic_launcher_round.png.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\mipmap-hdpi\\ic_launcher_round.png"
-    },
-    {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\mipmap-xxhdpi_ic_launcher_round.png.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\mipmap-xxhdpi\\ic_launcher_round.png"
-    },
-    {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\xml_network_security_config.xml.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\xml\\network_security_config.xml"
-    },
-    {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\mipmap-hdpi_ic_launcher.png.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\mipmap-hdpi\\ic_launcher.png"
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/mipmap-xxxhdpi/ic_launcher_round.png"
     },
     {
         "merged": "com.cognitivechaos.xdownload.app-debug-88:/drawable_ic_twitter.png.flat",
         "source": "com.cognitivechaos.xdownload.app-main-90:/drawable/ic_twitter.png"
     },
     {
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
         "merged": "com.cognitivechaos.xdownload.app-debug-88:/drawable_ic_facebook.png.flat",
         "source": "com.cognitivechaos.xdownload.app-main-90:/drawable/ic_facebook.png"
     },
     {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\mipmap-xxhdpi_ic_launcher.png.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\mipmap-xxhdpi\\ic_launcher.png"
-    },
-    {
-        "merged": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-debug-88:\\mipmap-mdpi_ic_launcher_round.png.flat",
-        "source": "C:\\Users\\bhara\\.gradle\\daemon\\8.11.1\\com.cognitivechaos.xdownload.app-main-90:\\mipmap-mdpi\\ic_launcher_round.png"
+        "merged": "com.cognitivechaos.xdownload.app-debug-88:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.cognitivechaos.xdownload.app-main-90:/mipmap-hdpi/ic_launcher.png"
     }
 ]

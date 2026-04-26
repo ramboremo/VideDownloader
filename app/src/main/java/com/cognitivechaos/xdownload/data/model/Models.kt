@@ -53,3 +53,18 @@ enum class DownloadStatus {
     FAILED,
     CANCELLED
 }
+
+sealed class ContextMenuTarget {
+    data class Link(val url: String) : ContextMenuTarget()
+    data class Image(val imageUrl: String) : ContextMenuTarget()
+    data class LinkAndImage(val linkUrl: String, val imageUrl: String) : ContextMenuTarget()
+    data class Video(val videoUrl: String) : ContextMenuTarget()
+}
+
+data class PendingGeneralDownload(
+    val url: String,
+    val fileName: String,
+    val mimeType: String,
+    val fileSize: Long?,
+    val sourceUrl: String = ""
+)

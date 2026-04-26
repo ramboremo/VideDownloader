@@ -1,9 +1,20 @@
 -- Merging decision tree log ---
+provider#androidx.core.content.FileProvider
+INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:62:9-70:20
+	android:grantUriPermissions
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:66:13-47
+	android:authorities
+		INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:64:13-64
+	android:exported
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:65:13-37
+	android:name
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:63:13-62
 manifest
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-62:12
-INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-62:12
-INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-62:12
-INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-62:12
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-73:12
+INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-73:12
+INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-73:12
+INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:2:1-73:12
 MERGED from [io.coil-kt:coil-video:2.7.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\88b51140922b8ef91f0d63a8a4ca6f98\transformed\coil-video-2.7.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.gms:play-services-ads:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\41711a52737b8db2fd627530a16d1fca\transformed\play-services-ads-23.0.0\AndroidManifest.xml:17:1-25:12
 MERGED from [androidx.webkit:webkit:1.12.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\f691342cfb7f230e913f86bb357e2229\transformed\webkit-1.12.1\AndroidManifest.xml:2:1-7:12
@@ -45,10 +56,12 @@ MERGED from [androidx.compose.ui:ui-graphics-android:1.7.6] C:\Users\bhara\.grad
 MERGED from [androidx.compose.ui:ui-test-manifest:1.7.6] C:\Users\bhara\.gradle\caches\8.11.1\transforms\197b3608fdc40b47939b2b1c27b3ecff\transformed\ui-test-manifest-1.7.6\AndroidManifest.xml:17:1-28:12
 MERGED from [com.google.dagger:hilt-android:2.53.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\622799c661c1c2f30481b77f5f0c8e3f\transformed\hilt-android-2.53.1\AndroidManifest.xml:16:1-19:12
 MERGED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\059361ad94afc45b73b21072f2048cc0\transformed\firebase-crashlytics-20.0.5\AndroidManifest.xml:2:1-24:12
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:17:1-38:12
 MERGED from [com.google.firebase:firebase-sessions:3.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\298481610c3f3a5d61be172c1be50c19\transformed\firebase-sessions-3.0.5\AndroidManifest.xml:15:1-35:12
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:2:1-24:12
-MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:15:1-41:12
 MERGED from [com.google.firebase:firebase-installations-interop:17.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\77473da5991b2540da664ca3c83a15ea\transformed\firebase-installations-interop-17.2.0\AndroidManifest.xml:15:1-19:12
+MERGED from [com.google.firebase:firebase-common-ktx:21.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8ae198b1aa8b50121eb8cb7c253a1577\transformed\firebase-common-ktx-21.0.0\AndroidManifest.xml:2:1-18:12
+MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:15:1-41:12
 MERGED from [com.google.android.gms:play-services-appset:16.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\707c9fd0918bfedd11a309730ccbe8f4\transformed\play-services-appset-16.0.1\AndroidManifest.xml:2:1-9:12
 MERGED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\9b0fec4b0a90f9f95d1414fb756ce3e3\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:17:1-95:12
 MERGED from [androidx.work:work-runtime:2.7.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\19003553ecf7d359d9a20b6156d0aad9\transformed\work-runtime-2.7.0\AndroidManifest.xml:17:1-145:12
@@ -84,6 +97,7 @@ MERGED from [androidx.datastore:datastore-preferences-android:1.1.7] C:\Users\bh
 MERGED from [androidx.datastore:datastore-android:1.1.7] C:\Users\bhara\.gradle\caches\8.11.1\transforms\a58ac2c13ee10fbfc91bae6f67b2a29e\transformed\datastore-release\AndroidManifest.xml:17:1-22:12
 MERGED from [com.google.android.gms:play-services-base:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ba8dfc949f7f6be5579bcbc211fd28b2\transformed\play-services-base-18.0.0\AndroidManifest.xml:16:1-24:12
 MERGED from [com.google.android.gms:play-services-tasks:18.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7a75f2e32c828a5a561a64777c46b8f4\transformed\play-services-tasks-18.4.0\AndroidManifest.xml:2:1-6:12
+MERGED from [com.google.firebase:firebase-abt:21.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\af337bd6acd6680ca973dbfc8e34bf75\transformed\firebase-abt-21.1.1\AndroidManifest.xml:2:1-18:12
 MERGED from [com.google.firebase:firebase-measurement-connector:20.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7b0ca66a3fb4554dbbed91ec0c24832f\transformed\firebase-measurement-connector-20.0.1\AndroidManifest.xml:17:1-25:12
 MERGED from [com.google.android.gms:play-services-ads-base:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ad513d88631da046aaf43840db0538d9\transformed\play-services-ads-base-23.0.0\AndroidManifest.xml:2:1-9:12
 MERGED from [com.google.android.gms:play-services-ads-identifier:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4bde143d6136a92c844a9fff30e44652\transformed\play-services-ads-identifier-18.0.0\AndroidManifest.xml:17:1-27:12
@@ -140,6 +154,8 @@ uses-permission#android.permission.INTERNET
 ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:5:5-67
 MERGED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\059361ad94afc45b73b21072f2048cc0\transformed\firebase-crashlytics-20.0.5\AndroidManifest.xml:7:5-67
 MERGED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\059361ad94afc45b73b21072f2048cc0\transformed\firebase-crashlytics-20.0.5\AndroidManifest.xml:7:5-67
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:23:5-67
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:23:5-67
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:8:5-67
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:8:5-67
 MERGED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\9b0fec4b0a90f9f95d1414fb756ce3e3\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:24:5-67
@@ -156,6 +172,8 @@ MERGED from [androidx.media3:media3-common:1.2.0] C:\Users\bhara\.gradle\caches\
 MERGED from [androidx.media3:media3-common:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\97c6095ce1261f3757749d030c6687f5\transformed\media3-common-1.2.0\AndroidManifest.xml:22:5-79
 MERGED from [androidx.media3:media3-exoplayer:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\df0810a32b14468c89e6d998f3ff8a44\transformed\media3-exoplayer-1.2.0\AndroidManifest.xml:22:5-79
 MERGED from [androidx.media3:media3-exoplayer:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\df0810a32b14468c89e6d998f3ff8a44\transformed\media3-exoplayer-1.2.0\AndroidManifest.xml:22:5-79
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:22:5-79
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:22:5-79
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:7:5-79
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:7:5-79
 MERGED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\9b0fec4b0a90f9f95d1414fb756ce3e3\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:25:5-79
@@ -192,37 +210,45 @@ uses-permission#android.permission.READ_MEDIA_VIDEO
 ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:13:5-75
 	android:name
 		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:13:22-72
+uses-permission#android.permission.READ_MEDIA_IMAGES
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:14:5-76
+	android:name
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:14:22-73
 uses-permission#android.permission.READ_MEDIA_AUDIO
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:14:5-75
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:15:5-75
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:14:22-72
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:15:22-72
 uses-permission#android.permission.FOREGROUND_SERVICE
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:15:5-77
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:16:5-77
 MERGED from [androidx.work:work-runtime:2.7.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\19003553ecf7d359d9a20b6156d0aad9\transformed\work-runtime-2.7.0\AndroidManifest.xml:28:5-77
 MERGED from [androidx.work:work-runtime:2.7.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\19003553ecf7d359d9a20b6156d0aad9\transformed\work-runtime-2.7.0\AndroidManifest.xml:28:5-77
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:15:22-74
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:16:22-74
 uses-permission#android.permission.FOREGROUND_SERVICE_DATA_SYNC
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:16:5-87
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:17:5-87
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:16:22-84
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:17:22-84
 uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:17:5-77
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:18:5-77
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:17:22-74
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:18:22-74
 application
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:19:5-60:19
-INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:19:5-60:19
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:20:5-71:19
+INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:20:5-71:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.7.6] C:\Users\bhara\.gradle\caches\8.11.1\transforms\eb188c8b96f3340dffc9871796ca9610\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.7.6] C:\Users\bhara\.gradle\caches\8.11.1\transforms\eb188c8b96f3340dffc9871796ca9610\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-test-manifest:1.7.6] C:\Users\bhara\.gradle\caches\8.11.1\transforms\197b3608fdc40b47939b2b1c27b3ecff\transformed\ui-test-manifest-1.7.6\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-test-manifest:1.7.6] C:\Users\bhara\.gradle\caches\8.11.1\transforms\197b3608fdc40b47939b2b1c27b3ecff\transformed\ui-test-manifest-1.7.6\AndroidManifest.xml:22:5-26:19
 MERGED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\059361ad94afc45b73b21072f2048cc0\transformed\firebase-crashlytics-20.0.5\AndroidManifest.xml:11:5-22:19
 MERGED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\059361ad94afc45b73b21072f2048cc0\transformed\firebase-crashlytics-20.0.5\AndroidManifest.xml:11:5-22:19
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:25:5-36:19
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:25:5-36:19
 MERGED from [com.google.firebase:firebase-sessions:3.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\298481610c3f3a5d61be172c1be50c19\transformed\firebase-sessions-3.0.5\AndroidManifest.xml:21:5-33:19
 MERGED from [com.google.firebase:firebase-sessions:3.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\298481610c3f3a5d61be172c1be50c19\transformed\firebase-sessions-3.0.5\AndroidManifest.xml:21:5-33:19
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:11:5-22:19
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:11:5-22:19
+MERGED from [com.google.firebase:firebase-common-ktx:21.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8ae198b1aa8b50121eb8cb7c253a1577\transformed\firebase-common-ktx-21.0.0\AndroidManifest.xml:8:5-16:19
+MERGED from [com.google.firebase:firebase-common-ktx:21.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8ae198b1aa8b50121eb8cb7c253a1577\transformed\firebase-common-ktx-21.0.0\AndroidManifest.xml:8:5-16:19
 MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:22:5-39:19
 MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:22:5-39:19
 MERGED from [com.google.android.gms:play-services-appset:16.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\707c9fd0918bfedd11a309730ccbe8f4\transformed\play-services-appset-16.0.1\AndroidManifest.xml:7:5-20
@@ -243,6 +269,8 @@ MERGED from [com.google.android.gms:play-services-base:18.0.0] C:\Users\bhara\.g
 MERGED from [com.google.android.gms:play-services-base:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ba8dfc949f7f6be5579bcbc211fd28b2\transformed\play-services-base-18.0.0\AndroidManifest.xml:19:5-23:19
 MERGED from [com.google.android.gms:play-services-tasks:18.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7a75f2e32c828a5a561a64777c46b8f4\transformed\play-services-tasks-18.4.0\AndroidManifest.xml:5:5-20
 MERGED from [com.google.android.gms:play-services-tasks:18.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7a75f2e32c828a5a561a64777c46b8f4\transformed\play-services-tasks-18.4.0\AndroidManifest.xml:5:5-20
+MERGED from [com.google.firebase:firebase-abt:21.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\af337bd6acd6680ca973dbfc8e34bf75\transformed\firebase-abt-21.1.1\AndroidManifest.xml:10:5-16:19
+MERGED from [com.google.firebase:firebase-abt:21.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\af337bd6acd6680ca973dbfc8e34bf75\transformed\firebase-abt-21.1.1\AndroidManifest.xml:10:5-16:19
 MERGED from [com.google.firebase:firebase-measurement-connector:20.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7b0ca66a3fb4554dbbed91ec0c24832f\transformed\firebase-measurement-connector-20.0.1\AndroidManifest.xml:22:5-23:19
 MERGED from [com.google.firebase:firebase-measurement-connector:20.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7b0ca66a3fb4554dbbed91ec0c24832f\transformed\firebase-measurement-connector-20.0.1\AndroidManifest.xml:22:5-23:19
 MERGED from [com.google.android.gms:play-services-ads-base:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ad513d88631da046aaf43840db0538d9\transformed\play-services-ads-base-23.0.0\AndroidManifest.xml:7:5-20
@@ -272,77 +300,83 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\bh
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\46b6e43cfa4d2bd178d29647df8ba592\transformed\core-1.15.0\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:25:9-35
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:26:9-35
 	android:label
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:23:9-41
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:24:9-41
 	android:roundIcon
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:24:9-54
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:25:9-54
 	android:icon
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:22:9-43
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:23:9-43
 	android:allowBackup
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:21:9-35
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:22:9-35
 	android:theme
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:26:9-52
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:27:9-52
 	android:networkSecurityConfig
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:28:9-69
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:29:9-69
 	android:usesCleartextTraffic
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:27:9-44
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:28:9-44
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:20:9-37
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:21:9-37
 meta-data#com.google.android.gms.ads.APPLICATION_ID
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:31:9-33:69
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:32:9-34:69
 	android:value
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:33:13-67
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:34:13-67
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:32:13-69
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:33:13-69
 activity#com.cognitivechaos.xdownload.MainActivity
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:35:9-54:20
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:36:9-55:20
 	android:launchMode
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:38:13-44
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:39:13-44
 	android:windowSoftInputMode
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:40:13-55
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:41:13-55
 	android:exported
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:37:13-36
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:38:13-36
 	android:configChanges
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:39:13-74
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:40:13-74
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:36:13-41
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:37:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:41:13-44:29
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:42:13-45:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:42:17-69
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:43:17-69
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:42:25-66
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:43:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:43:17-77
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:44:17-77
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:43:27-74
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:44:27-74
 intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:scheme:http+data:scheme:https
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:47:13-53:29
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:48:13-54:29
 action#android.intent.action.VIEW
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:48:17-69
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:49:17-69
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:48:25-66
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:49:25-66
 category#android.intent.category.DEFAULT
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:49:17-76
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:50:17-76
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:49:27-73
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:50:27-73
 category#android.intent.category.BROWSABLE
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:50:17-78
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:51:17-78
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:50:27-75
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:51:27-75
 data
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:51:17-47
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:52:17-47
 	android:scheme
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:51:23-44
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:52:23-44
 service#com.cognitivechaos.xdownload.service.DownloadService
-ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:56:9-59:56
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:57:9-60:56
 	android:exported
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:58:13-37
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:59:13-37
 	android:foregroundServiceType
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:59:13-53
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:60:13-53
 	android:name
-		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:57:13-52
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:58:13-52
+meta-data#android.support.FILE_PROVIDER_PATHS
+ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:67:13-69:54
+	android:resource
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:69:17-51
+	android:name
+		ADDED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml:68:17-67
 uses-sdk
 INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\bhara\Downloads\VideDownloader\app\src\main\AndroidManifest.xml
@@ -429,14 +463,18 @@ MERGED from [com.google.dagger:hilt-android:2.53.1] C:\Users\bhara\.gradle\cache
 MERGED from [com.google.dagger:hilt-android:2.53.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\622799c661c1c2f30481b77f5f0c8e3f\transformed\hilt-android-2.53.1\AndroidManifest.xml:18:3-42
 MERGED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\059361ad94afc45b73b21072f2048cc0\transformed\firebase-crashlytics-20.0.5\AndroidManifest.xml:5:5-44
 MERGED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\059361ad94afc45b73b21072f2048cc0\transformed\firebase-crashlytics-20.0.5\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:20:5-44
 MERGED from [com.google.firebase:firebase-sessions:3.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\298481610c3f3a5d61be172c1be50c19\transformed\firebase-sessions-3.0.5\AndroidManifest.xml:18:5-44
 MERGED from [com.google.firebase:firebase-sessions:3.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\298481610c3f3a5d61be172c1be50c19\transformed\firebase-sessions-3.0.5\AndroidManifest.xml:18:5-44
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:5:5-44
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:5:5-44
-MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:19:5-44
-MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:19:5-44
 MERGED from [com.google.firebase:firebase-installations-interop:17.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\77473da5991b2540da664ca3c83a15ea\transformed\firebase-installations-interop-17.2.0\AndroidManifest.xml:17:5-44
 MERGED from [com.google.firebase:firebase-installations-interop:17.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\77473da5991b2540da664ca3c83a15ea\transformed\firebase-installations-interop-17.2.0\AndroidManifest.xml:17:5-44
+MERGED from [com.google.firebase:firebase-common-ktx:21.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8ae198b1aa8b50121eb8cb7c253a1577\transformed\firebase-common-ktx-21.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-common-ktx:21.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8ae198b1aa8b50121eb8cb7c253a1577\transformed\firebase-common-ktx-21.0.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:19:5-44
+MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:19:5-44
 MERGED from [com.google.android.gms:play-services-appset:16.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\707c9fd0918bfedd11a309730ccbe8f4\transformed\play-services-appset-16.0.1\AndroidManifest.xml:5:5-44
 MERGED from [com.google.android.gms:play-services-appset:16.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\707c9fd0918bfedd11a309730ccbe8f4\transformed\play-services-appset-16.0.1\AndroidManifest.xml:5:5-44
 MERGED from [com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\9b0fec4b0a90f9f95d1414fb756ce3e3\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:21:5-44
@@ -507,6 +545,8 @@ MERGED from [com.google.android.gms:play-services-base:18.0.0] C:\Users\bhara\.g
 MERGED from [com.google.android.gms:play-services-base:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ba8dfc949f7f6be5579bcbc211fd28b2\transformed\play-services-base-18.0.0\AndroidManifest.xml:18:5-43
 MERGED from [com.google.android.gms:play-services-tasks:18.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7a75f2e32c828a5a561a64777c46b8f4\transformed\play-services-tasks-18.4.0\AndroidManifest.xml:4:5-43
 MERGED from [com.google.android.gms:play-services-tasks:18.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7a75f2e32c828a5a561a64777c46b8f4\transformed\play-services-tasks-18.4.0\AndroidManifest.xml:4:5-43
+MERGED from [com.google.firebase:firebase-abt:21.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\af337bd6acd6680ca973dbfc8e34bf75\transformed\firebase-abt-21.1.1\AndroidManifest.xml:5:5-7:41
+MERGED from [com.google.firebase:firebase-abt:21.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\af337bd6acd6680ca973dbfc8e34bf75\transformed\firebase-abt-21.1.1\AndroidManifest.xml:5:5-7:41
 MERGED from [com.google.firebase:firebase-measurement-connector:20.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7b0ca66a3fb4554dbbed91ec0c24832f\transformed\firebase-measurement-connector-20.0.1\AndroidManifest.xml:20:5-44
 MERGED from [com.google.firebase:firebase-measurement-connector:20.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7b0ca66a3fb4554dbbed91ec0c24832f\transformed\firebase-measurement-connector-20.0.1\AndroidManifest.xml:20:5-44
 MERGED from [com.google.android.gms:play-services-ads-base:23.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ad513d88631da046aaf43840db0538d9\transformed\play-services-ads-base-23.0.0\AndroidManifest.xml:5:5-44
@@ -611,12 +651,18 @@ ADDED from [androidx.compose.ui:ui-test-manifest:1.7.6] C:\Users\bhara\.gradle\c
 		ADDED from [androidx.compose.ui:ui-test-manifest:1.7.6] C:\Users\bhara\.gradle\caches\8.11.1\transforms\197b3608fdc40b47939b2b1c27b3ecff\transformed\ui-test-manifest-1.7.6\AndroidManifest.xml:24:13-63
 service#com.google.firebase.components.ComponentDiscoveryService
 ADDED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\059361ad94afc45b73b21072f2048cc0\transformed\firebase-crashlytics-20.0.5\AndroidManifest.xml:12:9-21:19
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:26:9-35:19
+MERGED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:26:9-35:19
 MERGED from [com.google.firebase:firebase-sessions:3.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\298481610c3f3a5d61be172c1be50c19\transformed\firebase-sessions-3.0.5\AndroidManifest.xml:26:9-32:19
 MERGED from [com.google.firebase:firebase-sessions:3.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\298481610c3f3a5d61be172c1be50c19\transformed\firebase-sessions-3.0.5\AndroidManifest.xml:26:9-32:19
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:12:9-21:19
 MERGED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:12:9-21:19
+MERGED from [com.google.firebase:firebase-common-ktx:21.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8ae198b1aa8b50121eb8cb7c253a1577\transformed\firebase-common-ktx-21.0.0\AndroidManifest.xml:9:9-15:19
+MERGED from [com.google.firebase:firebase-common-ktx:21.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8ae198b1aa8b50121eb8cb7c253a1577\transformed\firebase-common-ktx-21.0.0\AndroidManifest.xml:9:9-15:19
 MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:30:9-38:19
 MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:30:9-38:19
+MERGED from [com.google.firebase:firebase-abt:21.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\af337bd6acd6680ca973dbfc8e34bf75\transformed\firebase-abt-21.1.1\AndroidManifest.xml:11:9-15:19
+MERGED from [com.google.firebase:firebase-abt:21.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\af337bd6acd6680ca973dbfc8e34bf75\transformed\firebase-abt-21.1.1\AndroidManifest.xml:11:9-15:19
 MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\5508a5f93b462bde34dbf8ad56583b46\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:22:9-28:19
 MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\5508a5f93b462bde34dbf8ad56583b46\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:22:9-28:19
 	android:exported
@@ -639,6 +685,18 @@ ADDED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gra
 		ADDED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\059361ad94afc45b73b21072f2048cc0\transformed\firebase-crashlytics-20.0.5\AndroidManifest.xml:20:17-82
 	android:name
 		ADDED from [com.google.firebase:firebase-crashlytics:20.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\059361ad94afc45b73b21072f2048cc0\transformed\firebase-crashlytics-20.0.5\AndroidManifest.xml:19:17-115
+meta-data#com.google.firebase.components:com.google.firebase.remoteconfig.FirebaseRemoteConfigKtxRegistrar
+ADDED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:29:13-31:85
+	android:value
+		ADDED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:31:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:30:17-128
+meta-data#com.google.firebase.components:com.google.firebase.remoteconfig.RemoteConfigRegistrar
+ADDED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:32:13-34:85
+	android:value
+		ADDED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:34:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-config:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\4920c607328b34802671c5db6694b509\transformed\firebase-config-22.0.1\AndroidManifest.xml:33:17-117
 service#com.google.firebase.sessions.SessionLifecycleService
 ADDED from [com.google.firebase:firebase-sessions:3.0.5] C:\Users\bhara\.gradle\caches\8.11.1\transforms\298481610c3f3a5d61be172c1be50c19\transformed\firebase-sessions-3.0.5\AndroidManifest.xml:22:9-25:40
 	android:enabled
@@ -665,6 +723,12 @@ ADDED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.g
 		ADDED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:20:17-82
 	android:name
 		ADDED from [com.google.firebase:firebase-installations:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8228961f7e638bf2a11db2fa2621dc15\transformed\firebase-installations-18.0.0\AndroidManifest.xml:19:17-127
+meta-data#com.google.firebase.components:com.google.firebase.ktx.FirebaseCommonLegacyRegistrar
+ADDED from [com.google.firebase:firebase-common-ktx:21.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8ae198b1aa8b50121eb8cb7c253a1577\transformed\firebase-common-ktx-21.0.0\AndroidManifest.xml:12:13-14:85
+	android:value
+		ADDED from [com.google.firebase:firebase-common-ktx:21.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8ae198b1aa8b50121eb8cb7c253a1577\transformed\firebase-common-ktx-21.0.0\AndroidManifest.xml:14:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-common-ktx:21.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\8ae198b1aa8b50121eb8cb7c253a1577\transformed\firebase-common-ktx-21.0.0\AndroidManifest.xml:13:17-116
 provider#com.google.firebase.provider.FirebaseInitProvider
 ADDED from [com.google.firebase:firebase-common:22.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\7ab3ed370dc2d9da4a2bc3280c3bcb86\transformed\firebase-common-22.0.1\AndroidManifest.xml:23:9-28:39
 	android:authorities
@@ -1050,6 +1114,12 @@ ADDED from [com.google.android.gms:play-services-base:18.0.0] C:\Users\bhara\.gr
 		ADDED from [com.google.android.gms:play-services-base:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ba8dfc949f7f6be5579bcbc211fd28b2\transformed\play-services-base-18.0.0\AndroidManifest.xml:21:19-78
 	android:name
 		ADDED from [com.google.android.gms:play-services-base:18.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\ba8dfc949f7f6be5579bcbc211fd28b2\transformed\play-services-base-18.0.0\AndroidManifest.xml:20:19-85
+meta-data#com.google.firebase.components:com.google.firebase.abt.component.AbtRegistrar
+ADDED from [com.google.firebase:firebase-abt:21.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\af337bd6acd6680ca973dbfc8e34bf75\transformed\firebase-abt-21.1.1\AndroidManifest.xml:12:13-14:85
+	android:value
+		ADDED from [com.google.firebase:firebase-abt:21.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\af337bd6acd6680ca973dbfc8e34bf75\transformed\firebase-abt-21.1.1\AndroidManifest.xml:14:17-82
+	android:name
+		ADDED from [com.google.firebase:firebase-abt:21.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\af337bd6acd6680ca973dbfc8e34bf75\transformed\firebase-abt-21.1.1\AndroidManifest.xml:13:17-109
 meta-data#com.google.android.gms.version
 ADDED from [com.google.android.gms:play-services-basement:18.8.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\effada1916dbb92598350ebed83a5876\transformed\play-services-basement-18.8.0\AndroidManifest.xml:21:9-23:69
 	android:value

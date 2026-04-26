@@ -11,8 +11,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -27,12 +30,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.cognitivechaos.xdownload.ui.browser.BrowserScreen
+import com.cognitivechaos.xdownload.ui.files.DownloadFileActions
 import com.cognitivechaos.xdownload.ui.files.FilesScreen
+import com.cognitivechaos.xdownload.ui.onboarding.OnboardingScreen
+import com.cognitivechaos.xdownload.ui.player.ImageViewerScreen
 import com.cognitivechaos.xdownload.ui.player.VideoPlayerScreen
 import com.cognitivechaos.xdownload.ui.settings.SettingsScreen
 import com.cognitivechaos.xdownload.ui.theme.VideDownloaderTheme
 import com.cognitivechaos.xdownload.data.preferences.AppPreferences
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -66,14 +73,45 @@ class MainActivity : ComponentActivity() {
 
             // Observe the pending URL (updated by both onCreate and onNewIntent)
             val initialUrl by _pendingUrl
+            val forceUpdateChecker = remember { ForceUpdateChecker(this@MainActivity) }
+            var forceUpdateState by remember { mutableStateOf<ForceUpdateState?>(null) }
+
+            LaunchedEffect(Unit) {
+                forceUpdateChecker.check { state ->
+                    forceUpdateState = state
+                }
+            }
 
             VideDownloaderTheme(darkTheme = darkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation(initialUrl = initialUrl)
+                    val onboardingSeen by preferences.onboardingSeen.collectAsState(initial = null)
+                    val scope = rememberCoroutineScope()
+
+                    when (onboardingSeen) {
+                        null -> {
+                            // Still loading preference — show nothing (avoids flash)
+                            Box(modifier = Modifier.fillMaxSize())
+                        }
+                        false -> {
+                            OnboardingScreen(
+                                onFinished = {
+                                    scope.launch { preferences.setOnboardingSeen() }
+                                }
+                            )
+                        }
+                        else -> {
+                            AppNavigation(initialUrl = initialUrl)
+                        }
+                    }
                 }
+
+                ForceUpdateDialog(
+                    state = forceUpdateState,
+                    onUpdate = { forceUpdateChecker.openPlayStore(forceUpdateState) }
+                )
             }
         }
     }
@@ -102,6 +140,11 @@ class MainActivity : ComponentActivity() {
             ) {
                 permissions.add(Manifest.permission.READ_MEDIA_VIDEO)
             }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+            }
         } else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED
@@ -114,6 +157,25 @@ class MainActivity : ComponentActivity() {
             permissionLauncher.launch(permissions.toTypedArray())
         }
     }
+}
+
+@Composable
+private fun ForceUpdateDialog(
+    state: ForceUpdateState?,
+    onUpdate: () -> Unit
+) {
+    if (state == null) return
+
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text(state.title) },
+        text = { Text(state.message) },
+        confirmButton = {
+            Button(onClick = onUpdate) {
+                Text("Update")
+            }
+        }
+    )
 }
 
 @Composable
@@ -130,7 +192,9 @@ fun AppNavigation(initialUrl: String? = null) {
     val secondaryRoutes = setOf("files", "settings") // player/{downloadId} handled below
     val isBrowserActive = currentRoute == null
         || currentRoute == "files_placeholder"
-        || (!secondaryRoutes.contains(currentRoute) && !currentRoute.startsWith("player/"))
+        || (!secondaryRoutes.contains(currentRoute) &&
+            !currentRoute.startsWith("player/") &&
+            !currentRoute.startsWith("image/"))
 
     Box(modifier = Modifier.fillMaxSize()) {
         // BrowserScreen is ALWAYS in the composition tree — never removed.
@@ -174,12 +238,30 @@ fun AppNavigation(initialUrl: String? = null) {
             composable("files") {
                 FilesScreen(
                     onBack = { navController.popBackStack() },
-                    onPlay = { downloadId -> navController.navigate("player/$downloadId") { launchSingleTop = true } }
+                    onOpenDownload = { download ->
+                        val route = when {
+                            DownloadFileActions.isImage(download) -> "image/${download.id}"
+                            DownloadFileActions.isVideo(download) -> "player/${download.id}"
+                            else -> null
+                        }
+                        if (route != null) {
+                            navController.navigate(route) { launchSingleTop = true }
+                        } else {
+                            DownloadFileActions.openWith(context, download)
+                        }
+                    }
                 )
             }
             composable("player/{downloadId}") { backStackEntry ->
                 val downloadId = backStackEntry.arguments?.getString("downloadId") ?: return@composable
                 VideoPlayerScreen(
+                    downloadId = downloadId,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("image/{downloadId}") { backStackEntry ->
+                val downloadId = backStackEntry.arguments?.getString("downloadId") ?: return@composable
+                ImageViewerScreen(
                     downloadId = downloadId,
                     onBack = { navController.popBackStack() }
                 )

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -35,8 +36,9 @@ import com.cognitivechaos.xdownload.ui.theme.Orange500
 fun FilesScreen(
     viewModel: FilesViewModel = hiltViewModel(),
     onBack: () -> Unit,
-    onPlay: (String) -> Unit = {}
+    onOpenDownload: (DownloadEntity) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val selectedTab by viewModel.selectedTab.collectAsState()
     val allDownloads by viewModel.allDownloads.collectAsState()
     val privateDownloads by viewModel.privateDownloads.collectAsState()
@@ -143,7 +145,9 @@ fun FilesScreen(
                         onSyncToGallery = { viewModel.syncToGallery(it) },
                         onMoveToPrivate = { viewModel.moveToPrivate(it) },
                         onRemoveFromPrivate = { viewModel.removeFromPrivate(it) },
-                        onPlay = onPlay,
+                        onShare = { DownloadFileActions.share(context, it) },
+                        onOpenWith = { DownloadFileActions.openWith(context, it) },
+                        onOpenDownload = onOpenDownload,
                         formatSize = { viewModel.formatFileSize(it) }
                     )
                     1 -> EmptyTabContent("No music files", "Downloaded audio files will appear here")
@@ -164,7 +168,9 @@ fun FilesScreen(
                                 onSyncToGallery = { viewModel.syncToGallery(it) },
                                 onMoveToPrivate = { viewModel.moveToPrivate(it) },
                                 onRemoveFromPrivate = { viewModel.removeFromPrivate(it) },
-                                onPlay = onPlay,
+                                onShare = { DownloadFileActions.share(context, it) },
+                                onOpenWith = { DownloadFileActions.openWith(context, it) },
+                                onOpenDownload = onOpenDownload,
                                 formatSize = { viewModel.formatFileSize(it) }
                             )
                         }
@@ -326,7 +332,9 @@ fun DownloadsList(
     onSyncToGallery: (DownloadEntity) -> Unit,
     onMoveToPrivate: (DownloadEntity) -> Unit,
     onRemoveFromPrivate: (DownloadEntity) -> Unit,
-    onPlay: (String) -> Unit,
+    onShare: (DownloadEntity) -> Unit,
+    onOpenWith: (DownloadEntity) -> Unit,
+    onOpenDownload: (DownloadEntity) -> Unit,
     formatSize: (Long) -> String
 ) {
     if (downloads.isEmpty()) {
@@ -345,7 +353,9 @@ fun DownloadsList(
                     onSyncToGallery = { onSyncToGallery(download) },
                     onMoveToPrivate = { onMoveToPrivate(download) },
                     onRemoveFromPrivate = { onRemoveFromPrivate(download) },
-                    onPlay = onPlay,
+                    onShare = { onShare(download) },
+                    onOpenWith = { onOpenWith(download) },
+                    onOpenDownload = { onOpenDownload(download) },
                     formatSize = formatSize
                 )
             }
@@ -362,7 +372,9 @@ fun DownloadItem(
     onSyncToGallery: () -> Unit,
     onMoveToPrivate: () -> Unit,
     onRemoveFromPrivate: () -> Unit,
-    onPlay: (String) -> Unit,
+    onShare: () -> Unit,
+    onOpenWith: () -> Unit,
+    onOpenDownload: () -> Unit,
     formatSize: (Long) -> String
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -372,7 +384,7 @@ fun DownloadItem(
             .fillMaxWidth()
             .clickable { 
                 if (download.status == "COMPLETED") {
-                    onPlay(download.id)
+                    onOpenDownload()
                 }
             }
             .padding(horizontal = 16.dp, vertical = 10.dp),
@@ -386,6 +398,7 @@ fun DownloadItem(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             val context = androidx.compose.ui.platform.LocalContext.current
+            val isImage = remember(download.mimeType, download.filePath) { DownloadFileActions.isImage(download) }
             val imageSource = remember(download) {
                 if (download.status == "COMPLETED") {
                     java.io.File(download.filePath)
@@ -400,7 +413,7 @@ fun DownloadItem(
                 val imageRequest = remember(imageSource) {
                     val req = coil.request.ImageRequest.Builder(context)
                         .data(imageSource)
-                    if (download.status == "COMPLETED") {
+                    if (download.status == "COMPLETED" && !isImage) {
                         req.setParameter("coil#video_frame_micros", 3000L * 1000L)
                     }
                     req.build()
@@ -410,13 +423,17 @@ fun DownloadItem(
                     model = imageRequest,
                     contentDescription = null,
                     contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                    placeholder = androidx.compose.ui.graphics.vector.rememberVectorPainter(Icons.Default.VideoFile),
-                    error = androidx.compose.ui.graphics.vector.rememberVectorPainter(Icons.Default.VideoFile),
+                    placeholder = androidx.compose.ui.graphics.vector.rememberVectorPainter(
+                        if (isImage) Icons.Default.Image else Icons.Default.VideoFile
+                    ),
+                    error = androidx.compose.ui.graphics.vector.rememberVectorPainter(
+                        if (isImage) Icons.Default.Image else Icons.Default.VideoFile
+                    ),
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
                 Icon(
-                    Icons.Default.VideoFile,
+                    if (DownloadFileActions.isImage(download)) Icons.Default.Image else Icons.Default.VideoFile,
                     contentDescription = null,
                     modifier = Modifier
                         .size(32.dp)
@@ -639,9 +656,29 @@ fun DownloadItem(
                         }
                     )
                 }
+                if (download.status == "COMPLETED") {
+                    DropdownMenuItem(
+                        text = { Text("Open with") },
+                        onClick = {
+                            showMenu = false
+                            onOpenWith()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.OpenInNew,
+                                null,
+                                tint = Orange500
+                            )
+                        }
+                    )
+                }
                 DropdownMenuItem(
                     text = { Text("Share") },
-                    onClick = { showMenu = false },
+                    onClick = {
+                        showMenu = false
+                        onShare()
+                    },
+                    enabled = download.status == "COMPLETED",
                     leadingIcon = { Icon(Icons.Default.Share, null) }
                 )
                 DropdownMenuItem(
