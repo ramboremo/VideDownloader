@@ -254,12 +254,18 @@ class BrowserViewModel @Inject constructor(
 
 
     fun onPageStarted(tabId: String, url: String) {
+        // Evict this tab's cache entry ONLY when the URL actually changes.
+        // A same-URL refresh should NOT evict the cache — the page is reloading
+        // the same content and will produce the same detections. This prevents
+        // losing cached media when a tab switch triggers onPageStarted for the
+        // same URL, or when the user manually refreshes.
+        // IMPORTANT: Read previousUrl BEFORE updateTab() overwrites it.
+        val previousUrl = _tabs.value.find { it.id == tabId }?.url.orEmpty()
+        if (url != previousUrl) {
+            tabDetectedMediaCache.remove(tabId)
+        }
         // Always update this specific tab's metadata
         updateTab(tabId, url = url)
-        // Evict this tab's cache entry — the page is changing, so any previously
-        // detected media for this tab is now stale. Runs for ALL tabs (including
-        // background tabs navigating) so stale cache is never restored on return.
-        tabDetectedMediaCache.remove(tabId)
         // Only update global UI state if this is the active tab
         if (!isActiveTab(tabId)) return
         clearPageError()
@@ -724,26 +730,37 @@ class BrowserViewModel @Inject constructor(
         loadingFinishJob?.cancel()
         _isLoading.value = false
         _loadingProgress.value = 0
-        videoDetector.clearDetectedMedia()
 
         val index = _activeTabIndex.value
         if (index !in _tabs.value.indices) return
 
-        val updatedTabs = _tabs.value.toMutableList()
-        val activeTab = updatedTabs[index]
-        val nextIncognito = !activeTab.isIncognito
-        val nextTitle = if (nextIncognito) "Incognito" else "New Tab"
+        val activeTab = _tabs.value[index]
+        val wasIncognito = activeTab.isIncognito
 
-        updatedTabs[index] = activeTab.copy(
-            url = "",
-            title = nextTitle,
-            isIncognito = nextIncognito
-        )
-        _tabs.value = updatedTabs
-        _isIncognito.value = nextIncognito
-        _currentUrl.value = ""
-        _currentTitle.value = nextTitle
-        _tabSwitchVersion.value++
+        if (!wasIncognito) {
+            // Turning ON incognito: create a NEW incognito tab so the current
+            // tab's browsing state and history are preserved.
+            val outgoingTabId = activeTab.id
+            tabDetectedMediaCache[outgoingTabId] = videoDetector.detectedMedia.value
+            videoDetector.clearDetectedMedia()
+
+            val newTab = BrowserTab(isActive = true, isIncognito = true)
+            val updatedTabs = _tabs.value.map { it.copy(isActive = false) } + newTab
+            _tabs.value = updatedTabs
+            _activeTabIndex.value = updatedTabs.size - 1
+            _isIncognito.value = true
+            _currentUrl.value = ""
+            _currentTitle.value = "Incognito"
+            _tabSwitchVersion.value++
+        } else {
+            // Turning OFF incognito: just mark the current tab as non-incognito.
+            // Keep the page — the user stays where they are, history recording
+            // resumes from this point.
+            val updatedTabs = _tabs.value.toMutableList()
+            updatedTabs[index] = activeTab.copy(isIncognito = false)
+            _tabs.value = updatedTabs
+            _isIncognito.value = false
+        }
     }
 
     // History
