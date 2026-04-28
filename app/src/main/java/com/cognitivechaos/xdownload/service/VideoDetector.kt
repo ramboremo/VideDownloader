@@ -191,6 +191,26 @@ class VideoDetector @Inject constructor(
     }
 
     /**
+     * Restores previously saved detected media for a tab being switched back to.
+     * Called by BrowserViewModel.switchToTab() after clearing the singleton state,
+     * when the incoming tab has a non-empty cache entry.
+     *
+     * Repopulates detectedUrls for correct deduplication and restores
+     * currentPageUrl/Title/Thumbnail from the first media item.
+     */
+    fun restoreDetectedMedia(media: List<DetectedMedia>) {
+        detectedUrls.clear()
+        media.forEach { detectedUrls.add(it.url) }
+        _detectedMedia.value = media
+        _hasMedia.value = media.isNotEmpty()
+        media.firstOrNull()?.let { first ->
+            currentPageUrl = first.sourcePageUrl
+            currentPageTitle = first.sourcePageTitle
+            currentPageThumbnail = first.thumbnailUrl ?: ""
+        }
+    }
+
+    /**
      * Bug fix: Cancel the internal coroutine scope to prevent leaked coroutines.
      * Should be called from Application.onTerminate() or a lifecycle-aware component.
      */

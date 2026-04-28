@@ -14,13 +14,23 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.verticalDrag
+import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.animation.splineBasedDecay
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -34,10 +44,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
@@ -49,6 +63,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cognitivechaos.xdownload.data.db.HistoryEntity
 import com.cognitivechaos.xdownload.data.model.ContextMenuTarget
@@ -60,6 +75,7 @@ import kotlinx.coroutines.*
 import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.absoluteValue
 
 import androidx.compose.ui.res.painterResource
 import com.cognitivechaos.xdownload.R
@@ -69,6 +85,12 @@ data class QuickAccessSite(
     val url: String,
     val color: Color,
     val iconRes: Int
+)
+
+private data class PendingClosedTabUndo(
+    val tab: com.cognitivechaos.xdownload.data.model.BrowserTab,
+    val index: Int,
+    val wasActive: Boolean
 )
 
 val quickAccessSites = listOf(
@@ -81,6 +103,7 @@ val quickAccessSites = listOf(
 )
 
 private const val WEBVIEW_VIDEO_HIT_TYPE = 10
+private const val INTERNAL_BLANK_URL = "about:blank"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,7 +133,6 @@ fun BrowserScreen(
     val isIncognito by viewModel.isIncognito.collectAsState()
     val tabs by viewModel.tabs.collectAsState()
     val activeTabIndex by viewModel.activeTabIndex.collectAsState()
-    val blockAds by viewModel.blockAds.collectAsState()
     val bookmarks by viewModel.bookmarks.collectAsState()
     val history by viewModel.history.collectAsState()
     val isNetworkError by viewModel.isNetworkError.collectAsState()
@@ -120,14 +142,20 @@ fun BrowserScreen(
     val pendingGeneralDownload by viewModel.pendingGeneralDownload.collectAsState()
 
     var urlInput by remember { mutableStateOf("") }
+    var tabSwitcherListMode by remember { mutableStateOf(false) }
+    var newestTabId by remember { mutableStateOf<String?>(null) }
+    var pendingClosedTabUndo by remember { mutableStateOf<PendingClosedTabUndo?>(null) }
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     // --- Per-tab WebView management ---
     // Each tab gets its own WebView instance so it retains its own back stack,
     // scroll position, and page content independently.
     val tabWebViews = remember { mutableStateMapOf<String, WebView>() }
+    val tabPreviewBitmaps = remember { mutableStateMapOf<String, Bitmap>() }
     val activeTab = tabs.getOrNull(activeTabIndex)
     val activeTabId = activeTab?.id ?: ""
     val showHomePage = currentUrl.isEmpty()
@@ -141,64 +169,101 @@ fun BrowserScreen(
         } else null
     }
     // Convenience reference for the current "usable" webView
-    val webView = if (isIncognito) null else activeWebView
+    val webView = activeWebView
 
     // Clean up WebViews for closed tabs
-    LaunchedEffect(tabs) {
+    LaunchedEffect(tabs, pendingClosedTabUndo?.tab?.id) {
         val liveIds = tabs.map { it.id }.toSet()
-        tabWebViews.keys.filter { it !in liveIds }.forEach { closedId ->
+        val preservedIds = setOfNotNull(pendingClosedTabUndo?.tab?.id)
+        tabWebViews.keys.filter { it !in liveIds && it !in preservedIds }.forEach { closedId ->
             tabWebViews.remove(closedId)?.destroy()
+        }
+        tabPreviewBitmaps.keys
+            .filter { it !in liveIds && it !in preservedIds }
+            .forEach { removedId ->
+                tabPreviewBitmaps.remove(removedId)?.recycle()
+            }
+    }
+
+    fun closeTabWithUndo(index: Int) {
+        val closedTab = tabs.getOrNull(index) ?: return
+        if (tabs.size <= 1) {
+            viewModel.closeTab(index)
+            return
+        }
+
+        pendingClosedTabUndo = null
+        snackbarHostState.currentSnackbarData?.dismiss()
+
+        val undoData = PendingClosedTabUndo(
+            tab = closedTab,
+            index = index,
+            wasActive = index == activeTabIndex
+        )
+        pendingClosedTabUndo = undoData
+        viewModel.closeTab(index)
+
+        coroutineScope.launch {
+            val result = snackbarHostState.showSnackbar(
+                message = "Tab ${undoData.index + 1} dismissed",
+                actionLabel = "Undo",
+                withDismissAction = true,
+                duration = SnackbarDuration.Short
+            )
+            val pending = pendingClosedTabUndo
+            if (pending?.tab?.id == undoData.tab.id) {
+                if (result == SnackbarResult.ActionPerformed) {
+                    viewModel.restoreClosedTab(
+                        tab = pending.tab,
+                        index = pending.index,
+                        makeActive = pending.wasActive
+                    )
+                }
+                pendingClosedTabUndo = null
+            }
+        }
+    }
+
+    fun pauseMediaInAllTabs() {
+        val pauseMediaJs = """
+            (function() {
+              document.querySelectorAll('video,audio').forEach(function(media) {
+                try { media.pause(); } catch (e) {}
+              });
+            })();
+        """.trimIndent()
+        tabWebViews.values.forEach { wv ->
+            wv.evaluateJavascript(pauseMediaJs, null)
+            wv.onPause()
         }
     }
 
     // Pause background WebViews, resume the active one.
     // onPause() stops JS execution and timers, preventing background tabs from
     // firing callbacks that overwrite the active tab's URL bar and loading state.
-    LaunchedEffect(activeTabId) {
-        tabWebViews.forEach { (id, wv) ->
-            if (id == activeTabId) wv.onResume() else wv.onPause()
+    LaunchedEffect(activeTabId, showTabManager) {
+        if (showTabManager) {
+            pauseMediaInAllTabs()
+        } else {
+            tabWebViews.forEach { (id, wv) ->
+                if (id == activeTabId) wv.onResume() else wv.onPause()
+            }
         }
     }
 
-    // Separate incognito WebView — created lazily, destroyed when leaving incognito
-    var incognitoWebView by remember { mutableStateOf<WebView?>(null) }
-
-    // Create/destroy incognito WebView when toggling
-    LaunchedEffect(isIncognito) {
-        if (isIncognito) {
-            // Create a fresh incognito WebView
-            incognitoWebView = WebView(context).apply {
-                settings.apply {
-                    javaScriptEnabled = true
-                    domStorageEnabled = true
-                    databaseEnabled = true
-                    allowFileAccess = true
-                    mediaPlaybackRequiresUserGesture = false
-                    useWideViewPort = true
-                    loadWithOverviewMode = true
-                    builtInZoomControls = true
-                    displayZoomControls = false
-                    setSupportMultipleWindows(false)
-                    mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                    cacheMode = WebSettings.LOAD_NO_CACHE
-                    userAgentString = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-                }
-            }
-        } else {
-            // Destroy incognito WebView and clear its data
-            incognitoWebView?.apply {
-                clearCache(true)
+    LaunchedEffect(activeTabId, isIncognito, currentUrl) {
+        if (currentUrl.isEmpty()) {
+            activeWebView?.apply {
+                stopLoading()
                 clearHistory()
                 clearFormData()
-                destroy()
+                if (isIncognito) clearCache(true)
             }
-            incognitoWebView = null
-            // Obs B fix: Only remove session cookies instead of all cookies.
-            // removeAllCookies() was nuking the regular browsing session (logging users out everywhere).
-            CookieManager.getInstance().removeSessionCookies(null)
         }
     }
 
+    // Blank tabs keep their WebView state reset so private and normal history
+    // cannot leak through when the same tab changes browsing mode.
     LaunchedEffect(initialUrl) {
         if (!initialUrl.isNullOrBlank()) {
             urlInput = initialUrl
@@ -245,7 +310,7 @@ fun BrowserScreen(
 
     // Handle back press to intelligently dismiss overlays, navigate back, or confirm exit
     BackHandler(enabled = true) {
-        val activeWv = if (isIncognito) incognitoWebView else webView
+        val activeWv = webView
         when {
             contextMenuTarget != null -> viewModel.dismissContextMenu()
             pendingGeneralDownload != null -> viewModel.dismissGeneralDownload()
@@ -253,11 +318,17 @@ fun BrowserScreen(
             showTabManager -> viewModel.dismissTabManager()
             showBookmarks -> viewModel.dismissBookmarks()
             showHistory -> viewModel.dismissHistory()
+            activeWv?.url == INTERNAL_BLANK_URL -> {
+                activeWv.clearHistory()
+                urlInput = ""
+                viewModel.navigateTo("")
+                viewModel.onTitleChanged(if (isIncognito) "Incognito" else "New Tab")
+            }
             activeWv?.canGoBack() == true -> activeWv.goBack()
             !showHomePage -> {
                 urlInput = ""
                 viewModel.navigateTo("")
-                viewModel.onTitleChanged("New Tab")
+                viewModel.onTitleChanged(if (isIncognito) "Incognito" else "New Tab")
             }
             else -> {
                 if (backPressedOnce) {
@@ -280,9 +351,9 @@ fun BrowserScreen(
 
     // Navigate ONLY when the user explicitly triggers navigation (URL bar, quick access, etc.)
     val navigationVersion by viewModel.navigationVersion.collectAsState()
-    LaunchedEffect(navigationVersion) {
+    LaunchedEffect(navigationVersion, activeTabId, activeWebView) {
         if (currentUrl.isNotEmpty()) {
-            val activeWv = if (isIncognito) incognitoWebView else webView
+            val activeWv = webView
             if (activeWv != null && currentUrl != activeWv.url) {
                 activeWv.loadUrl(currentUrl)
             }
@@ -298,11 +369,112 @@ fun BrowserScreen(
         urlInput = currentUrl
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            tabPreviewBitmaps.values.forEach { it.recycle() }
+            tabPreviewBitmaps.clear()
+        }
+    }
+
+    fun capturePreviewBitmap(source: WebView): Bitmap? {
+        val sourceWidth = source.width.takeIf { it > 0 } ?: source.measuredWidth
+        val sourceHeight = source.height.takeIf { it > 0 } ?: source.measuredHeight
+        if (sourceWidth <= 0 || sourceHeight <= 0) return null
+
+        val targetWidth = 420
+        val scale = if (sourceWidth > targetWidth) targetWidth.toFloat() / sourceWidth else 1f
+        val bitmapWidth = (sourceWidth * scale).toInt().coerceAtLeast(1)
+        val bitmapHeight = (sourceHeight * scale).toInt().coerceAtLeast(1)
+        val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        canvas.drawColor(android.graphics.Color.WHITE)
+        canvas.scale(scale, scale)
+        source.draw(canvas)
+        return bitmap
+    }
+
+    fun refreshTabPreviewsForSwitcher() {
+        tabs.forEach { tab ->
+            val preview = tabWebViews[tab.id]?.let(::capturePreviewBitmap)
+            if (preview != null) {
+                tabPreviewBitmaps.remove(tab.id)?.recycle()
+                tabPreviewBitmaps[tab.id] = preview
+            }
+        }
+    }
+
+    LaunchedEffect(showTabManager, tabs, isIncognito) {
+        if (!showTabManager) return@LaunchedEffect
+        refreshTabPreviewsForSwitcher()
+    }
+
+    val topBarAlpha by animateFloatAsState(
+        targetValue = if (showTabManager) 0f else 1f,
+        animationSpec = tween(360, easing = LinearOutSlowInEasing),
+        label = "topBarAlpha"
+    )
+    val topBarOffset by animateDpAsState(
+        targetValue = if (showTabManager) (-28).dp else 0.dp,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "topBarOffset"
+    )
+    val bottomBarAlpha by animateFloatAsState(
+        targetValue = if (showTabManager) 0f else 1f,
+        animationSpec = tween(360, easing = LinearOutSlowInEasing),
+        label = "bottomBarAlpha"
+    )
+    val bottomBarOffset by animateDpAsState(
+        targetValue = if (showTabManager) 110.dp else 0.dp,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "bottomBarOffset"
+    )
+    val browserScale by animateFloatAsState(
+        targetValue = if (showTabManager) 0.92f else 1f,
+        animationSpec = tween(480, easing = FastOutSlowInEasing),
+        label = "browserScale"
+    )
+    val browserOffsetY by animateDpAsState(
+        targetValue = if (showTabManager) 10.dp else 0.dp,
+        animationSpec = tween(480, easing = FastOutSlowInEasing),
+        label = "browserOffsetY"
+    )
+    val browserAlpha by animateFloatAsState(
+        targetValue = if (showTabManager) 0.05f else 1f,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "browserAlpha"
+    )
+    val browserCornerRadius by animateDpAsState(
+        targetValue = if (showTabManager) 24.dp else 0.dp,
+        animationSpec = tween(480, easing = FastOutSlowInEasing),
+        label = "browserCornerRadius"
+    )
+    val switcherScrimAlpha by animateFloatAsState(
+        targetValue = if (showTabManager) 0.74f else 0f,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "switcherScrimAlpha"
+    )
+    val fabAlpha by animateFloatAsState(
+        targetValue = if (showTabManager) 0f else 1f,
+        animationSpec = tween(300, easing = LinearOutSlowInEasing),
+        label = "fabAlpha"
+    )
+    val fabScale by animateFloatAsState(
+        targetValue = if (showTabManager) 0.86f else 1f,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
+        label = "fabScale"
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             // ===== TOP BAR =====
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .zIndex(3f)
+                    .graphicsLayer {
+                        alpha = topBarAlpha
+                        translationY = topBarOffset.toPx()
+                    },
                 color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 2.dp
             ) {
@@ -391,8 +563,7 @@ fun BrowserScreen(
                                 ) {
                                     IconButton(onClick = {
                                         viewModel.dismissMenu()
-                                        val wv = if (isIncognito) incognitoWebView else activeWebView
-                                        wv?.goForward()
+                                        activeWebView?.goForward()
                                     }) {
                                         Icon(Icons.AutoMirrored.Filled.ArrowForward, "Forward")
                                     }
@@ -400,7 +571,7 @@ fun BrowserScreen(
                                         viewModel.dismissMenu()
                                         urlInput = ""
                                         viewModel.navigateTo("")
-                                        viewModel.onTitleChanged("New Tab")
+                                        viewModel.onTitleChanged(if (isIncognito) "Incognito" else "New Tab")
                                     }) {
                                         Icon(Icons.Default.Home, "Home")
                                     }
@@ -412,8 +583,7 @@ fun BrowserScreen(
                                     }
                                     IconButton(onClick = {
                                         viewModel.dismissMenu()
-                                        val wv = if (isIncognito) incognitoWebView else activeWebView
-                                        wv?.reload()
+                                        activeWebView?.reload()
                                     }) {
                                         Icon(Icons.Default.Refresh, "Reload")
                                     }
@@ -556,7 +726,27 @@ fun BrowserScreen(
             }
 
             // ===== CONTENT AREA =====
-            Box(modifier = Modifier.weight(1f)) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clipToBounds()
+                    .zIndex(0f)
+                    .graphicsLayer {
+                        alpha = browserAlpha
+                        scaleX = browserScale
+                        scaleY = browserScale
+                        translationY = browserOffsetY.toPx()
+                    }
+                    .then(
+                        if (showTabManager) {
+                            Modifier
+                                .shadow(14.dp, RoundedCornerShape(browserCornerRadius))
+                                .clip(RoundedCornerShape(browserCornerRadius))
+                        } else {
+                            Modifier
+                        }
+                    )
+            ) {
                 if (showHomePage) {
                     // Home page with quick access sites
                     HomePageContent(
@@ -569,14 +759,15 @@ fun BrowserScreen(
                 } else {
                     // WebView — use separate incognito WebView when in incognito mode,
                     // otherwise use the active tab's own WebView.
-                    val displayWebView = if (isIncognito) incognitoWebView else activeWebView
+                    val displayWebView = activeWebView
                     if (displayWebView != null) {
                         // key() forces Compose to swap the AndroidView when the tab changes
-                        key(if (isIncognito) "incognito" else activeTabId) {
+                        key(activeTabId) {
                             WebViewContent(
                                 viewModel = viewModel,
                                 webViewInstance = displayWebView,
-                                tabId = if (isIncognito) "incognito" else activeTabId,
+                                tabId = activeTabId,
+                                isPrivate = isIncognito,
                                 onUrlChanged = { url -> urlInput = url },
                                 onShowCustomView = { view, callback ->
                                     fullScreenCustomView = view
@@ -598,8 +789,7 @@ fun BrowserScreen(
                             description = networkErrorDescription,
                             onRetry = {
                                 viewModel.clearPageError()
-                                val wv = if (isIncognito) incognitoWebView else activeWebView
-                                wv?.reload()
+                                activeWebView?.reload()
                             }
                         )
                     }
@@ -624,6 +814,11 @@ fun BrowserScreen(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 16.dp, bottom = 16.dp)
+                        .graphicsLayer {
+                            alpha = fabAlpha
+                            scaleX = fabScale
+                            scaleY = fabScale
+                        }
                 )
 
                 // Copyright block message (Google/YouTube)
@@ -689,7 +884,13 @@ fun BrowserScreen(
 
             // ===== BOTTOM NAVIGATION BAR =====
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .zIndex(3f)
+                    .graphicsLayer {
+                        alpha = bottomBarAlpha
+                        translationY = bottomBarOffset.toPx()
+                    },
                 color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 8.dp
             ) {
@@ -705,16 +906,14 @@ fun BrowserScreen(
                         icon = Icons.AutoMirrored.Filled.ArrowBack,
                         label = "Back",
                         onClick = {
-                            val wv = if (isIncognito) incognitoWebView else activeWebView
-                            wv?.goBack()
+                            activeWebView?.goBack()
                         }
                     )
                     BottomNavItem(
                         icon = Icons.AutoMirrored.Filled.ArrowForward,
                         label = "Forward",
                         onClick = {
-                            val wv = if (isIncognito) incognitoWebView else activeWebView
-                            wv?.goForward()
+                            activeWebView?.goForward()
                         }
                     )
                     BottomNavItem(
@@ -723,7 +922,7 @@ fun BrowserScreen(
                         onClick = {
                             urlInput = ""
                             viewModel.navigateTo("")
-                            viewModel.onTitleChanged("New Tab")
+                            viewModel.onTitleChanged(if (isIncognito) "Incognito" else "New Tab")
                         }
                     )
                     val hasActiveDownloads by viewModel.hasActiveDownloads.collectAsState()
@@ -748,7 +947,11 @@ fun BrowserScreen(
                         BottomNavItem(
                             icon = Icons.Default.Tab,
                             label = "Tabs",
-                            onClick = { viewModel.showTabManager() }
+                            onClick = {
+                                pauseMediaInAllTabs()
+                                refreshTabPreviewsForSwitcher()
+                                viewModel.showTabManager()
+                            }
                         )
                         // Tab count badge
                         if (tabs.size > 1) {
@@ -813,22 +1016,74 @@ fun BrowserScreen(
             }
         )
 
+        if (switcherScrimAlpha > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = switcherScrimAlpha))
+            )
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .zIndex(6f)
+                .padding(horizontal = 16.dp)
+                .padding(bottom = if (showTabManager) 116.dp else 88.dp)
+                .navigationBarsPadding()
+        ) { data ->
+            Snackbar(
+                action = {
+                    data.visuals.actionLabel?.let { actionLabel ->
+                        TextButton(onClick = { data.performAction() }) {
+                            Text(actionLabel)
+                        }
+                    }
+                },
+                dismissAction = {
+                    IconButton(onClick = { data.dismiss() }) {
+                        Icon(Icons.Default.Close, contentDescription = "Dismiss")
+                    }
+                }
+            ) {
+                Text(data.visuals.message)
+            }
+        }
+
         // Tab manager overlay
-        if (showTabManager) {
+        AnimatedVisibility(
+            visible = showTabManager,
+            enter = fadeIn(tween(380)),
+            exit = fadeOut(tween(320))
+        ) {
             TabManagerOverlay(
                 tabs = tabs,
+                activeTabIndex = activeTabIndex,
+                isListMode = tabSwitcherListMode,
+                previewBitmaps = tabPreviewBitmaps,
                 onTabClick = { index ->
                     viewModel.switchToTab(index)
                     viewModel.dismissTabManager()
                 },
-                onCloseTab = { index -> viewModel.closeTab(index) },
+                onCloseTab = { index -> closeTabWithUndo(index) },
                 onCloseAll = { viewModel.closeAllTabs() },
+                newestTabId = newestTabId,
                 onAddTab = {
                     viewModel.addNewTab()
-                    viewModel.dismissTabManager()
-                    urlInput = ""
+                    refreshTabPreviewsForSwitcher()
+                    newestTabId = viewModel.tabs.value.lastOrNull()?.id
                 },
-                onDone = { viewModel.dismissTabManager() }
+                onDone = { viewModel.dismissTabManager() },
+                onToggleViewMode = { tabSwitcherListMode = !tabSwitcherListMode },
+                onShowHistory = {
+                    viewModel.dismissTabManager()
+                    viewModel.showHistory()
+                },
+                onShowMore = {
+                    viewModel.dismissTabManager()
+                    viewModel.toggleMenu()
+                }
             )
         }
 
@@ -987,6 +1242,7 @@ fun WebViewContent(
     viewModel: BrowserViewModel,
     webViewInstance: WebView,
     tabId: String,
+    isPrivate: Boolean = false,
     onUrlChanged: (String) -> Unit,
     onShowCustomView: (android.view.View, WebChromeClient.CustomViewCallback) -> Unit = { _, _ -> },
     onHideCustomView: () -> Unit = {}
@@ -1018,7 +1274,7 @@ fun WebViewContent(
                     displayZoomControls = false
                     setSupportMultipleWindows(false)
                     mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                    cacheMode = WebSettings.LOAD_DEFAULT
+                    cacheMode = if (isPrivate) WebSettings.LOAD_NO_CACHE else WebSettings.LOAD_DEFAULT
                     userAgentString = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 }
 
@@ -1074,6 +1330,7 @@ fun WebViewContent(
 
                     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                         super.onPageStarted(view, url, favicon)
+                        if (url == INTERNAL_BLANK_URL) return
                         url?.let {
                             viewModel.onPageStarted(tabId, it)
                             if (viewModel.isActiveTab(tabId)) onUrlChanged(it)
@@ -1082,8 +1339,20 @@ fun WebViewContent(
 
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
+                        if (url == INTERNAL_BLANK_URL) {
+                            if (viewModel.isActiveTab(tabId)) {
+                                view?.clearHistory()
+                                viewModel.navigateTo("")
+                            }
+                            return
+                        }
                         url?.let { viewModel.onPageFinished(tabId, it) }
                         view?.title?.let { viewModel.onTitleChanged(tabId, it) }
+
+                        // Only run JS detection and thumbnail capture for the active tab.
+                        // Background tabs' onPageFinished (and their postDelayed callbacks)
+                        // must not overwrite the active tab's currentPageThumbnail.
+                        if (!viewModel.isActiveTab(tabId)) return
 
                         // Inject JS to collect playback/visibility/ad-UI signals from video elements
                         if (view != null) {
@@ -1122,10 +1391,14 @@ fun WebViewContent(
                         // Helper to run JS detection and process results
                         fun runVideoDetection(v: WebView, pageUrl: String) {
                             v.evaluateJavascript("document.querySelector('meta[property=\"og:image\"]')?.content || document.querySelector('link[rel=\"apple-touch-icon\"]')?.href || ''") { thumbUrl ->
+                                // Guard: tab may have switched while JS was executing
+                                if (!viewModel.isActiveTab(tabId)) return@evaluateJavascript
                                 val cleanThumb = thumbUrl?.trim('"')?.replace("\\\"", "\"") ?: ""
                                 viewModel.videoDetector.setCurrentThumbnail(cleanThumb)
                             }
                             v.evaluateJavascript(viewModel.videoDetector.getVideoDetectionJs()) { result ->
+                                // Guard: tab may have switched while JS was executing
+                                if (!viewModel.isActiveTab(tabId)) return@evaluateJavascript
                                 if (result != null && result != "null" && result != "\"[]\"") {
                                     try {
                                         // Bug fix #13: Use proper JSON parsing instead of manual string splitting
@@ -1162,8 +1435,14 @@ fun WebViewContent(
                                 (u.contains("/video/") || u.contains("/watch/") || u.contains("/videos/"))
                             }
                             if (needsDelayedDetection) {
-                                view.postDelayed({ runVideoDetection(view, url) }, 2500)
-                                view.postDelayed({ runVideoDetection(view, url) }, 5000)
+                                // Inner isActiveTab guards: the tab could switch between now
+                                // and when the callback fires, so re-check at execution time.
+                                view.postDelayed({
+                                    if (viewModel.isActiveTab(tabId)) runVideoDetection(view, url)
+                                }, 2500)
+                                view.postDelayed({
+                                    if (viewModel.isActiveTab(tabId)) runVideoDetection(view, url)
+                                }, 5000)
                             }
                         }
                     }
@@ -1231,7 +1510,7 @@ fun WebViewContent(
             }
         },
         update = { wv ->
-            // Update could be used for other properties if needed
+            wv.settings.cacheMode = if (isPrivate) WebSettings.LOAD_NO_CACHE else WebSettings.LOAD_DEFAULT
         },
         modifier = Modifier.fillMaxSize()
     )
@@ -2091,140 +2370,564 @@ fun QualityPickerSheet(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TabManagerOverlay(
     tabs: List<com.cognitivechaos.xdownload.data.model.BrowserTab>,
+    activeTabIndex: Int,
+    isListMode: Boolean,
+    previewBitmaps: Map<String, Bitmap>,
+    newestTabId: String?,
     onTabClick: (Int) -> Unit,
     onCloseTab: (Int) -> Unit,
     onCloseAll: () -> Unit,
     onAddTab: () -> Unit,
-    onDone: () -> Unit
+    onDone: () -> Unit,
+    onToggleViewMode: () -> Unit,
+    onShowHistory: () -> Unit,
+    onShowMore: () -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val compactCardWidth = (configuration.screenWidthDp.dp - 84.dp).coerceAtLeast(220.dp)
+    val compactListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = activeTabIndex.coerceIn(0, tabs.lastIndex.coerceAtLeast(0))
+    )
+    val compactFlingBehavior = rememberSnapFlingBehavior(lazyListState = compactListState)
+
+    LaunchedEffect(activeTabIndex, tabs.size, isListMode) {
+        if (!isListMode && tabs.isNotEmpty()) {
+            compactListState.animateScrollToItem(activeTabIndex.coerceIn(0, tabs.lastIndex))
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .systemBarsPadding()
     ) {
-        Column(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
-            // Tab cards
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Tabs",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = 0.16f)
+                ) {
+                    Text(
+                        text = "${tabs.size}",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(onClick = onDone) {
+                    Text("Done", color = Color.White)
+                }
+            }
+
+            Box(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .fillMaxWidth()
             ) {
-                items(tabs.size) { index ->
-                    val tab = tabs[index]
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                            .clickable { onTabClick(index) },
-                        shape = RoundedCornerShape(12.dp),
-                        border = if (tab.isActive) BorderStroke(2.dp, Orange500) else null,
-                        color = MaterialTheme.colorScheme.surfaceVariant
+                if (isListMode) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column {
-                            // Tab header
-                            Row(
+                        itemsIndexed(tabs, key = { _, tab -> tab.id }) { index, tab ->
+                            TabSwitcherPreviewCard(
+                                tab = tab,
+                                isActive = index == activeTabIndex,
+                                isPrivate = tab.isIncognito,
+                                compact = false,
+                                previewBitmap = previewBitmaps[tab.id],
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(
-                                        if (tab.isActive) Orange500.copy(alpha = 0.2f)
-                                        else MaterialTheme.colorScheme.surfaceVariant
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                IconButton(
-                                    onClick = { onCloseTab(index) },
-                                    modifier = Modifier.size(20.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = "Close tab",
-                                        modifier = Modifier.size(14.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    .height(170.dp)
+                                    .animateItem(
+                                        fadeInSpec = tween(320),
+                                        placementSpec = tween(380, easing = FastOutSlowInEasing),
+                                        fadeOutSpec = tween(200)
+                                    ),
+                                onClick = { onTabClick(index) },
+                                onClose = { onCloseTab(index) }
+                            )
+                        }
+                    }
+                } else {
+                    LazyRow(
+                        state = compactListState,
+                        modifier = Modifier.fillMaxSize(),
+                        flingBehavior = compactFlingBehavior,
+                        contentPadding = PaddingValues(horizontal = 42.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        itemsIndexed(tabs, key = { _, tab -> tab.id }) { index, tab ->
+                            val isNewest = tab.id == newestTabId
+                            val introScale = remember(tab.id) { Animatable(if (isNewest) 0.82f else 1f) }
+                            val introAlpha = remember(tab.id) { Animatable(if (isNewest) 0f else 1f) }
+                            val visibleItemInfo = compactListState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == tab.id }
+                            val viewportCenter =
+                                (compactListState.layoutInfo.viewportStartOffset + compactListState.layoutInfo.viewportEndOffset) / 2f
+                            val itemCenter = visibleItemInfo?.let { it.offset + (it.size / 2f) } ?: viewportCenter
+                            val itemWidth = visibleItemInfo?.size?.toFloat() ?: compactCardWidth.value
+                            val pageOffset = ((itemCenter - viewportCenter).absoluteValue / itemWidth)
+                                .coerceIn(0f, 1f)
+
+                            LaunchedEffect(tab.id) {
+                                if (isNewest) {
+                                    launch { introScale.animateTo(1f, tween(380, easing = FastOutSlowInEasing)) }
+                                    launch { introAlpha.animateTo(1f, tween(350)) }
                                 }
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = tab.title.ifEmpty { tab.url.ifEmpty { "New Tab" } },
-                                    style = MaterialTheme.typography.labelSmall,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f)
-                                )
                             }
 
-                            // Tab preview placeholder
-                            Box(
+                            TabSwitcherPreviewCard(
+                                tab = tab,
+                                isActive = index == activeTabIndex,
+                                isPrivate = tab.isIncognito,
+                                compact = true,
+                                previewBitmap = previewBitmaps[tab.id],
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.surface),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (tab.url.isEmpty()) {
-                                    Text(
-                                        text = "New Tab",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    .width(compactCardWidth)
+                                    .fillMaxHeight()
+                                    .animateItem(
+                                        fadeInSpec = tween(320),
+                                        placementSpec = tween(380, easing = FastOutSlowInEasing),
+                                        fadeOutSpec = tween(220)
                                     )
+                                    .graphicsLayer {
+                                        val pageScale = 1f - (pageOffset * 0.1f)
+                                        val pageAlpha = 1f - (pageOffset * 0.28f)
+                                        scaleX = pageScale * introScale.value
+                                        scaleY = pageScale * introScale.value
+                                        alpha = pageAlpha * introAlpha.value
+                                    },
+                                onClick = { onTabClick(index) },
+                                onClose = { onCloseTab(index) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp, vertical = 14.dp),
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+                tonalElevation = 6.dp,
+                shadowElevation = 12.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onToggleViewMode) {
+                        Icon(
+                            imageVector = if (isListMode) Icons.Default.ViewCarousel else Icons.Default.ViewList,
+                            contentDescription = "Toggle tab layout",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton(onClick = onShowHistory) {
+                        Icon(
+                            Icons.Default.History,
+                            contentDescription = "History",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Surface(
+                        modifier = Modifier.size(58.dp),
+                        shape = CircleShape,
+                        color = Orange500
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clickable(onClick = onAddTab),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "Add tab",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+                    TextButton(onClick = onCloseAll) {
+                        Text(
+                            text = "Close all",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton(onClick = onShowMore) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = "More",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TabSwitcherPreviewCard(
+    tab: com.cognitivechaos.xdownload.data.model.BrowserTab,
+    isActive: Boolean,
+    isPrivate: Boolean,
+    compact: Boolean,
+    previewBitmap: Bitmap?,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onClose: () -> Unit
+) {
+    val accentColor = if (isPrivate) Color(0xFF6C5CE7) else Orange500
+    val cardColor = if (isPrivate) Color(0xFF1E1B2A) else Color(0xFF232323)
+    val inactiveHeaderColor = if (isPrivate) Color(0xFF262236) else Color(0xFF2C2C2C)
+    val activeHeaderColor = if (isPrivate) Color(0xFF342A56) else Color(0xFF5A3C19)
+    var dragOffsetY by remember(tab.id) { mutableFloatStateOf(0f) }
+    var dragAlpha by remember(tab.id) { mutableFloatStateOf(1f) }
+    var settleJob by remember(tab.id) { mutableStateOf<Job?>(null) }
+    var cardHeightPx by remember { mutableFloatStateOf(0f) }
+    fun alphaForOffset(offset: Float): Float {
+        val progress = (-offset / 300f).coerceIn(0f, 1f)
+        return 1f - progress * 0.25f
+    }
+
+    Surface(
+        modifier = modifier
+            .onSizeChanged { size -> cardHeightPx = size.height.toFloat() }
+            .graphicsLayer {
+                translationY = dragOffsetY
+                alpha = dragAlpha
+            }
+            .pointerInput(tab.id) {
+                val decay = splineBasedDecay<Float>(this)
+                coroutineScope {
+                    while (true) {
+                        // Wait for finger down — don't consume yet
+                        val down = awaitPointerEventScope {
+                            awaitFirstDown(requireUnconsumed = false)
+                        }
+                        settleJob?.cancel()
+
+                        val velocityTracker = VelocityTracker()
+                        velocityTracker.addPosition(down.uptimeMillis, down.position)
+                        var currentOffset = dragOffsetY
+
+                        // Only consume if gesture is confirmed vertical — lets HorizontalPager handle horizontal swipes
+                        val drag = awaitPointerEventScope {
+                            awaitVerticalTouchSlopOrCancellation(down.id) { change, _ ->
+                                velocityTracker.addPosition(change.uptimeMillis, change.position)
+                                val deltaY = change.positionChange().y
+                                val nextOffset = currentOffset + deltaY
+                                currentOffset = if (nextOffset > 0f) {
+                                    nextOffset * 0.3f
                                 } else {
-                                    Text(
-                                        text = tab.url,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 3,
-                                        modifier = Modifier.padding(8.dp)
+                                    nextOffset
+                                }
+                                dragOffsetY = currentOffset
+                                dragAlpha = alphaForOffset(currentOffset)
+                                change.consume()
+                            }
+                        } ?: continue  // horizontal or cancelled — pass to Pager
+
+                        // Confirmed vertical — seed the tracker and apply first movement
+                        velocityTracker.addPosition(drag.uptimeMillis, drag.position)
+
+                        awaitPointerEventScope {
+                            verticalDrag(drag.id) { change ->
+                                val deltaY = change.positionChange().y
+                                velocityTracker.addPosition(change.uptimeMillis, change.position)
+                                currentOffset = if (currentOffset + deltaY > 0f) {
+                                    (currentOffset + deltaY) * 0.3f
+                                } else {
+                                    currentOffset + deltaY
+                                }
+                                dragOffsetY = currentOffset
+                                dragAlpha = alphaForOffset(currentOffset)
+                                change.consume()
+                            }
+                        }
+
+                        // Finger lifted — decide dismiss or snap back
+                        val velocity = velocityTracker.calculateVelocity().y
+                        val offset = currentOffset
+                        val targetOffset = decay.calculateTargetValue(offset, velocity)
+                        val dragRatio = if (cardHeightPx > 0f) (-offset / cardHeightPx) else 0f
+                        val flickDismiss =
+                            velocity < -220f ||
+                            (velocity < -120f && targetOffset < -(cardHeightPx * 0.12f))
+
+                        val shouldDismiss =
+                            dragRatio >= 0.38f ||
+                            targetOffset < -(cardHeightPx * 0.32f) ||
+                            flickDismiss
+
+                        if (shouldDismiss) {
+                            val dismissTarget = -((cardHeightPx + 96f).coerceAtLeast(600f))
+                            val remainingDistance = dismissTarget - offset
+                            val isFastFlick = velocity < -220f
+                            val animDuration = if (isFastFlick) 150
+                            else ((remainingDistance.absoluteValue / dismissTarget.absoluteValue) * 180f).toInt().coerceIn(80, 180)
+                            settleJob = launch {
+                                launch {
+                                    animate(
+                                        initialValue = dragAlpha,
+                                        targetValue = 0f,
+                                        animationSpec = tween((animDuration - 30).coerceAtLeast(1))
+                                    ) { value, _ ->
+                                        dragAlpha = value
+                                    }
+                                }
+                                animate(
+                                    initialValue = dragOffsetY,
+                                    targetValue = dismissTarget,
+                                    animationSpec = tween(animDuration, easing = LinearOutSlowInEasing)
+                                ) { value, _ ->
+                                    dragOffsetY = value
+                                }
+                                onClose()
+                            }
+                        } else {
+                            settleJob = launch {
+                                launch {
+                                    animate(
+                                        initialValue = dragAlpha,
+                                        targetValue = 1f,
+                                        animationSpec = tween(80)
+                                    ) { value, _ ->
+                                        dragAlpha = value
+                                    }
+                                }
+                                animate(
+                                    initialValue = dragOffsetY,
+                                    targetValue = 0f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMediumLow
                                     )
+                                ) { value, _ ->
+                                    dragOffsetY = value
                                 }
                             }
                         }
                     }
                 }
             }
-
-            // Bottom controls
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                shadowElevation = 8.dp
+            .clickable { onClick() },
+        shape = RoundedCornerShape(if (compact) 28.dp else 20.dp),
+        border = if (isActive) BorderStroke(2.dp, accentColor) else BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
+        color = cardColor,
+        shadowElevation = if (isActive) 12.dp else 4.dp
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        if (isActive) activeHeaderColor else inactiveHeaderColor
+                    )
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    modifier = Modifier.size(18.dp),
+                    shape = CircleShape,
+                    color = if (isActive) accentColor.copy(alpha = 0.22f) else MaterialTheme.colorScheme.surfaceVariant
                 ) {
-                    TextButton(onClick = onCloseAll) {
-                        Text(
-                            "CLOSE ALL",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
-
-                    IconButton(onClick = onAddTab) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Add tab",
-                            tint = Orange500,
-                            modifier = Modifier.size(28.dp)
+                            if (isPrivate) Icons.Default.VisibilityOff else Icons.Default.Language,
+                            contentDescription = null,
+                            tint = if (isActive) accentColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(12.dp)
                         )
                     }
-
-                    TextButton(onClick = onDone) {
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (isPrivate && tab.url.isBlank()) "Incognito" else tab.title.ifEmpty { "New Tab" },
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (tab.url.isNotEmpty()) {
                         Text(
-                            "DONE",
-                            color = Orange500,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold
+                            text = tab.url,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
+                    }
+                }
+                IconButton(
+                    onClick = { onClose() },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Close tab",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(cardColor)
+                    .padding(horizontal = if (compact) 16.dp else 18.dp, vertical = 14.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (previewBitmap != null) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Image(
+                            bitmap = previewBitmap.asImageBitmap(),
+                            contentDescription = "Tab preview",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(18.dp))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color.Black.copy(alpha = 0.08f),
+                                            Color.Black.copy(alpha = 0.28f)
+                                        )
+                                    )
+                                )
+                        )
+                        Surface(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(10.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color.Black.copy(alpha = 0.55f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Tab,
+                                    contentDescription = null,
+                                    tint = accentColor,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isPrivate) "Incognito tab" else if (isActive) "Current tab" else "Tap to open",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+                } else if (tab.url.isBlank()) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Surface(
+                            modifier = Modifier.size(if (compact) 54.dp else 64.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            color = accentColor.copy(alpha = 0.14f)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    if (isPrivate) Icons.Default.VisibilityOff else Icons.Default.Home,
+                                    contentDescription = null,
+                                    tint = accentColor,
+                                    modifier = Modifier.size(if (compact) 26.dp else 30.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = if (isPrivate) "Incognito" else "New Tab",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = if (isPrivate) "Private browsing session" else "Open a site or search from the browser bar",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = tab.title.ifEmpty { tab.url },
+                                style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = tab.url,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = if (compact) 2 else 3,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Tab,
+                                    contentDescription = null,
+                                    tint = accentColor,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isPrivate) "Incognito tab" else if (isActive) "Current tab" else "Tap to open",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
                     }
                 }
             }

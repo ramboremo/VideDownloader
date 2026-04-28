@@ -35,7 +35,8 @@ data class BrowserTab(
     val id: String = java.util.UUID.randomUUID().toString(),
     val url: String = "",
     val title: String = "New Tab",
-    val isActive: Boolean = false
+    val isActive: Boolean = false,
+    val isIncognito: Boolean = false
 )
 
 /**
