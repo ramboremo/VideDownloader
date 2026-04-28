@@ -686,41 +686,19 @@ class BrowserViewModel @Inject constructor(
 
     // Incognito
     fun toggleIncognito() {
-        clearPageError()
-        cancelQualityFetch()
-        cancelQualityPrefetch()
-        loadingFinishJob?.cancel()
-        _isLoading.value = false
-        _loadingProgress.value = 0
-
         val index = _activeTabIndex.value
         if (index !in _tabs.value.indices) return
 
         val activeTab = _tabs.value[index]
-        val wasIncognito = activeTab.isIncognito
+        val nextIncognito = !activeTab.isIncognito
 
-        if (!wasIncognito) {
-            // Turning ON incognito: create a NEW incognito tab so the current
-            // tab's browsing state and history are preserved.
-            videoDetector.clearDetectedMedia()
-
-            val newTab = BrowserTab(isActive = true, isIncognito = true)
-            val updatedTabs = _tabs.value.map { it.copy(isActive = false) } + newTab
-            _tabs.value = updatedTabs
-            _activeTabIndex.value = updatedTabs.size - 1
-            _isIncognito.value = true
-            _currentUrl.value = ""
-            _currentTitle.value = "Incognito"
-            _tabSwitchVersion.value++
-        } else {
-            // Turning OFF incognito: just mark the current tab as non-incognito.
-            // Keep the page — the user stays where they are, history recording
-            // resumes from this point.
-            val updatedTabs = _tabs.value.toMutableList()
-            updatedTabs[index] = activeTab.copy(isIncognito = false)
-            _tabs.value = updatedTabs
-            _isIncognito.value = false
-        }
+        // Just flip the flag on the current tab. The page, URL, detected
+        // videos — everything stays exactly as-is. The only effect is that
+        // history recording stops (when ON) or resumes (when OFF).
+        val updatedTabs = _tabs.value.toMutableList()
+        updatedTabs[index] = activeTab.copy(isIncognito = nextIncognito)
+        _tabs.value = updatedTabs
+        _isIncognito.value = nextIncognito
     }
 
     // History

@@ -666,10 +666,6 @@ fun BrowserScreen(
                                     onClick = {
                                         viewModel.dismissMenu()
                                         viewModel.toggleIncognito()
-                                        if (!isIncognito) {
-                                            // Entering incognito — go to home
-                                            urlInput = ""
-                                        }
                                     },
                                     leadingIcon = {
                                         Icon(
