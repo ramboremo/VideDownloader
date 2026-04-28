@@ -187,6 +187,8 @@ class VideoDetector @Inject constructor(
         prefetchedOptions.clear()
         prefetchedQualityOptions.clear()
         prefetchedFileSizes.clear()
+        currentPageUrl = ""
+        currentPageTitle = ""
         currentPageThumbnail = ""
     }
 
