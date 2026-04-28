@@ -350,8 +350,11 @@ fun BrowserScreen(
     }
 
     // Navigate ONLY when the user explicitly triggers navigation (URL bar, quick access, etc.)
+    // IMPORTANT: Do NOT key on activeTabId or activeWebView — tab switches must NOT
+    // trigger loadUrl(), as that inserts a duplicate entry into the WebView's back stack,
+    // corrupting the back/forward navigation order.
     val navigationVersion by viewModel.navigationVersion.collectAsState()
-    LaunchedEffect(navigationVersion, activeTabId, activeWebView) {
+    LaunchedEffect(navigationVersion) {
         if (currentUrl.isNotEmpty()) {
             val activeWv = webView
             if (activeWv != null && currentUrl != activeWv.url) {
