@@ -47,10 +47,7 @@ class BrowserViewModel @Inject constructor(
     private val _activeTabIndex = MutableStateFlow(0)
     val activeTabIndex: StateFlow<Int> = _activeTabIndex.asStateFlow()
 
-    // Per-tab cache of detected media — survives tab switches so returning to a tab
-    // restores its previously detected videos without requiring re-detection.
-    // Entries are evicted on tab close, closeAllTabs(), and onPageStarted() (navigation).
-    private val tabDetectedMediaCache = mutableMapOf<String, List<DetectedMedia>>()
+
 
     // URL state
     private val _currentUrl = MutableStateFlow("")
@@ -73,6 +70,12 @@ class BrowserViewModel @Inject constructor(
     // Incremented when the active tab changes so the UI can swap WebViews.
     private val _tabSwitchVersion = MutableStateFlow(0)
     val tabSwitchVersion: StateFlow<Int> = _tabSwitchVersion.asStateFlow()
+
+    // Incremented after a tab switch to signal the UI to re-run JS video detection
+    // on the active tab's already-loaded page. Site-specific extractors are re-triggered
+    // from switchToTab() directly via setCurrentPage().
+    private val _redetectVersion = MutableStateFlow(0)
+    val redetectVersion: StateFlow<Int> = _redetectVersion.asStateFlow()
 
     // Delayed loading finish job for smooth progress bar fade-out
     private var loadingFinishJob: Job? = null
@@ -254,16 +257,6 @@ class BrowserViewModel @Inject constructor(
 
 
     fun onPageStarted(tabId: String, url: String) {
-        // Evict this tab's cache entry ONLY when the URL actually changes.
-        // A same-URL refresh should NOT evict the cache — the page is reloading
-        // the same content and will produce the same detections. This prevents
-        // losing cached media when a tab switch triggers onPageStarted for the
-        // same URL, or when the user manually refreshes.
-        // IMPORTANT: Read previousUrl BEFORE updateTab() overwrites it.
-        val previousUrl = _tabs.value.find { it.id == tabId }?.url.orEmpty()
-        if (url != previousUrl) {
-            tabDetectedMediaCache.remove(tabId)
-        }
         // Always update this specific tab's metadata
         updateTab(tabId, url = url)
         // Only update global UI state if this is the active tab
@@ -515,12 +508,6 @@ class BrowserViewModel @Inject constructor(
     fun addNewTab() {
         clearPageError()
         _isIncognito.value = false
-        // Save outgoing tab's detected media before clearing so returning
-        // to this tab later can restore its videos from cache.
-        val outgoingTabId = _tabs.value.getOrNull(_activeTabIndex.value)?.id
-        if (outgoingTabId != null) {
-            tabDetectedMediaCache[outgoingTabId] = videoDetector.detectedMedia.value
-        }
         videoDetector.clearDetectedMedia()
         val newTab = BrowserTab(isActive = true)
         val updatedTabs = _tabs.value.map { it.copy(isActive = false) } + newTab
@@ -538,14 +525,6 @@ class BrowserViewModel @Inject constructor(
             loadingFinishJob?.cancel()
             _isLoading.value = false
             _loadingProgress.value = 0
-
-            // Save outgoing tab's detected media to cache before clearing the singleton.
-            // This allows restoring it when the user switches back to this tab.
-            val outgoingTabId = _tabs.value.getOrNull(_activeTabIndex.value)?.id
-            if (outgoingTabId != null) {
-                tabDetectedMediaCache[outgoingTabId] = videoDetector.detectedMedia.value
-            }
-
             videoDetector.clearDetectedMedia()
             val updatedTabs = _tabs.value.mapIndexed { i, tab ->
                 tab.copy(isActive = i == index)
@@ -556,18 +535,14 @@ class BrowserViewModel @Inject constructor(
             _isIncognito.value = tab.isIncognito
             _currentUrl.value = tab.url
             _currentTitle.value = tab.title
-
-            // Restore incoming tab's cached media (if any).
-            // This makes returning to a previously visited tab show its detected videos
-            // without requiring the user to re-browse the page.
-            val incomingTabId = tab.id
-            val cached = tabDetectedMediaCache[incomingTabId]
-            if (!cached.isNullOrEmpty()) {
-                videoDetector.restoreDetectedMedia(cached)
+            // Re-trigger site-specific extractors for the incoming tab's page.
+            if (tab.url.isNotEmpty()) {
+                videoDetector.setCurrentPage(tab.url, tab.title)
             }
-
             // Signal UI to swap to this tab's WebView (no reload needed).
             _tabSwitchVersion.value++
+            // Signal UI to re-run JS video detection on the active WebView.
+            _redetectVersion.value++
         }
     }
 
@@ -575,8 +550,6 @@ class BrowserViewModel @Inject constructor(
         clearPageError()
         if (_tabs.value.size <= 1) {
             // Can't close last tab, just reset it
-            val lastTabId = _tabs.value.firstOrNull()?.id
-            if (lastTabId != null) tabDetectedMediaCache.remove(lastTabId)
             _tabs.value = listOf(BrowserTab(isActive = true))
             _activeTabIndex.value = 0
             _isIncognito.value = false
@@ -584,10 +557,6 @@ class BrowserViewModel @Inject constructor(
             _currentTitle.value = "New Tab"
             return
         }
-
-        // Evict the closed tab's cache entry so stale media is never restored
-        val closedTabId = _tabs.value.getOrNull(index)?.id
-        if (closedTabId != null) tabDetectedMediaCache.remove(closedTabId)
 
         val updatedTabs = _tabs.value.toMutableList()
         updatedTabs.removeAt(index)
@@ -609,13 +578,7 @@ class BrowserViewModel @Inject constructor(
 
     fun restoreClosedTab(tab: BrowserTab, index: Int, makeActive: Boolean) {
         clearPageError()
-        // If the restored tab will become active, save the current tab's media
-        // and clear the singleton so the restored tab starts with a clean state.
         if (makeActive) {
-            val outgoingTabId = _tabs.value.getOrNull(_activeTabIndex.value)?.id
-            if (outgoingTabId != null) {
-                tabDetectedMediaCache[outgoingTabId] = videoDetector.detectedMedia.value
-            }
             videoDetector.clearDetectedMedia()
         }
         val updatedTabs = _tabs.value.toMutableList()
@@ -643,7 +606,6 @@ class BrowserViewModel @Inject constructor(
 
     fun closeAllTabs() {
         clearPageError()
-        tabDetectedMediaCache.clear()
         _tabs.value = listOf(BrowserTab(isActive = true))
         _activeTabIndex.value = 0
         _isIncognito.value = false
@@ -740,8 +702,6 @@ class BrowserViewModel @Inject constructor(
         if (!wasIncognito) {
             // Turning ON incognito: create a NEW incognito tab so the current
             // tab's browsing state and history are preserved.
-            val outgoingTabId = activeTab.id
-            tabDetectedMediaCache[outgoingTabId] = videoDetector.detectedMedia.value
             videoDetector.clearDetectedMedia()
 
             val newTab = BrowserTab(isActive = true, isIncognito = true)

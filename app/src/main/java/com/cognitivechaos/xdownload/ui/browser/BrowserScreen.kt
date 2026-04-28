@@ -369,6 +369,48 @@ fun BrowserScreen(
         urlInput = currentUrl
     }
 
+    // Re-run JS video detection on the active tab's WebView after a tab switch.
+    // The page is already loaded — we just re-evaluate the detection JS to find
+    // <video> elements and og:image thumbnails. Site-specific extractors (XNXX,
+    // XVideos, etc.) are re-triggered from switchToTab() via setCurrentPage().
+    val redetectVersion by viewModel.redetectVersion.collectAsState()
+    LaunchedEffect(redetectVersion) {
+        val wv = activeWebView ?: return@LaunchedEffect
+        val pageUrl = currentUrl
+        if (pageUrl.isEmpty()) return@LaunchedEffect
+
+        // Small delay to let the WebView fully resume after tab switch
+        kotlinx.coroutines.delay(300)
+
+        // Extract thumbnail from og:image meta tag
+        wv.evaluateJavascript(
+            "document.querySelector('meta[property=\"og:image\"]')?.content || document.querySelector('link[rel=\"apple-touch-icon\"]')?.href || ''"
+        ) { thumbUrl ->
+            val cleanThumb = thumbUrl?.trim('"')?.replace("\\\"", "\"") ?: ""
+            viewModel.videoDetector.setCurrentThumbnail(cleanThumb)
+        }
+
+        // Run JS-based video element detection
+        wv.evaluateJavascript(viewModel.videoDetector.getVideoDetectionJs()) { result ->
+            if (result != null && result != "null" && result != "\"[]\"") {
+                try {
+                    val cleaned = result.trim('"').replace("\\\"", "\"")
+                    val jsonArray = org.json.JSONArray(cleaned)
+                    for (i in 0 until jsonArray.length()) {
+                        val videoUrl = jsonArray.optString(i, "")
+                        if (videoUrl.startsWith("http")) {
+                            viewModel.videoDetector.onVideoElementDetected(
+                                videoUrl,
+                                pageUrl,
+                                wv.title ?: ""
+                            )
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
     DisposableEffect(Unit) {
         onDispose {
             tabPreviewBitmaps.values.forEach { it.recycle() }
