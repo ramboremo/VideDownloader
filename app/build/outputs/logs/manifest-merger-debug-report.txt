@@ -125,6 +125,8 @@ MERGED from [androidx.core:core-ktx:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1
 MERGED from [androidx.sqlite:sqlite-framework:2.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\50b3393f0f3bcd60f7248ef5cb30b8fc\transformed\sqlite-framework-2.4.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.sqlite:sqlite:2.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\12f229cf36a5217cdf7f8d663e105576\transformed\sqlite-2.4.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\81e4741a73dcdfb6ff322c02e784d055\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
 MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b49a80d08e89920b11bce35b1fd0387e\transformed\firebase-components-19.0.0\AndroidManifest.xml:15:1-20:12
 MERGED from [com.google.firebase:firebase-config-interop:16.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\946275cb1cc900ae050c83c7787da1cd\transformed\firebase-config-interop-16.0.1\AndroidManifest.xml:15:1-20:12
 MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\5508a5f93b462bde34dbf8ad56583b46\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:15:1-31:12
@@ -134,8 +136,6 @@ MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\
 MERGED from [com.google.android.datatransport:transport-api:3.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\1f9884ab20bd855c23f97423e2ab175e\transformed\transport-api-3.2.0\AndroidManifest.xml:15:1-20:12
 MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\a78db902b84b0018e5ba6e2572ebe471\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\17722b1e245cf14cece3b36c39f82803\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:17:1-55:12
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
 MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b4fc6fb37ce426f5f476a660e32f81ec\transformed\tracing-1.2.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\964e16d187e76ea0c11b2bfdcda72225\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.exifinterface:exifinterface:1.3.7] C:\Users\bhara\.gradle\caches\8.11.1\transforms\945491959d40729587a670aa6312875a\transformed\exifinterface-1.3.7\AndroidManifest.xml:17:1-24:12
@@ -283,16 +283,16 @@ MERGED from [com.google.android.gms:play-services-basement:18.8.0] C:\Users\bhar
 MERGED from [com.google.android.gms:play-services-basement:18.8.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\effada1916dbb92598350ebed83a5876\transformed\play-services-basement-18.8.0\AndroidManifest.xml:20:5-24:19
 MERGED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\46b6e43cfa4d2bd178d29647df8ba592\transformed\core-1.15.0\AndroidManifest.xml:28:5-89
 MERGED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\46b6e43cfa4d2bd178d29647df8ba592\transformed\core-1.15.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
 MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\5508a5f93b462bde34dbf8ad56583b46\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:21:5-29:19
 MERGED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\5508a5f93b462bde34dbf8ad56583b46\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:21:5-29:19
 MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\fead46553f04f324960ac9967b4f535f\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:25:5-33:19
 MERGED from [com.google.android.datatransport:transport-backend-cct:3.3.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\fead46553f04f324960ac9967b4f535f\transformed\transport-backend-cct-3.3.0\AndroidManifest.xml:25:5-33:19
 MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\e290cdab27b7d5c645db5da8cb729593\transformed\transport-runtime-3.3.0\AndroidManifest.xml:23:5-37:19
 MERGED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\e290cdab27b7d5c645db5da8cb729593\transformed\transport-runtime-3.3.0\AndroidManifest.xml:23:5-37:19
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\964e16d187e76ea0c11b2bfdcda72225\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\964e16d187e76ea0c11b2bfdcda72225\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
 	android:extractNativeLibs
@@ -601,6 +601,10 @@ MERGED from [androidx.sqlite:sqlite:2.4.0] C:\Users\bhara\.gradle\caches\8.11.1\
 MERGED from [androidx.sqlite:sqlite:2.4.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\12f229cf36a5217cdf7f8d663e105576\transformed\sqlite-2.4.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\81e4741a73dcdfb6ff322c02e784d055\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
 MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\81e4741a73dcdfb6ff322c02e784d055\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
 MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b49a80d08e89920b11bce35b1fd0387e\transformed\firebase-components-19.0.0\AndroidManifest.xml:18:5-44
 MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b49a80d08e89920b11bce35b1fd0387e\transformed\firebase-components-19.0.0\AndroidManifest.xml:18:5-44
 MERGED from [com.google.firebase:firebase-config-interop:16.0.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\946275cb1cc900ae050c83c7787da1cd\transformed\firebase-config-interop-16.0.1\AndroidManifest.xml:18:5-44
@@ -619,10 +623,6 @@ MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\bhara\.gradle\cache
 MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\a78db902b84b0018e5ba6e2572ebe471\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\17722b1e245cf14cece3b36c39f82803\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\17722b1e245cf14cece3b36c39f82803\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
 MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b4fc6fb37ce426f5f476a660e32f81ec\transformed\tracing-1.2.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.tracing:tracing:1.2.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\b4fc6fb37ce426f5f476a660e32f81ec\transformed\tracing-1.2.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\964e16d187e76ea0c11b2bfdcda72225\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
@@ -862,8 +862,8 @@ MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\bhara\.gradle\caches\8.11.1\
 MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\eb94044b18949babd15b7325ece47beb\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\bhara\.gradle\caches\8.11.1\transforms\137519b6ebdca6b460a96f0872564f1d\transformed\lifecycle-process-2.8.7\AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.lifecycle:lifecycle-process:2.8.7] C:\Users\bhara\.gradle\caches\8.11.1\transforms\137519b6ebdca6b460a96f0872564f1d\transformed\lifecycle-process-2.8.7\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\32348affb3bb5879f7bde7bd023a727d\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
 	tools:node
@@ -1146,6 +1146,48 @@ uses-permission#com.cognitivechaos.xdownload.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMI
 ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\46b6e43cfa4d2bd178d29647df8ba592\transformed\core-1.15.0\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.15.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\46b6e43cfa4d2bd178d29647df8ba592\transformed\core-1.15.0\AndroidManifest.xml:26:22-94
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.4.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\2a7ca16839b2e89f9cd3da53dc68d9ea\transformed\profileinstaller-1.4.1\AndroidManifest.xml:50:25-92
 meta-data#com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar
 ADDED from [com.google.firebase:firebase-datatransport:19.0.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\5508a5f93b462bde34dbf8ad56583b46\transformed\firebase-datatransport-19.0.0\AndroidManifest.xml:25:13-27:85
 	android:value
@@ -1180,45 +1222,3 @@ ADDED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\b
 		ADDED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\e290cdab27b7d5c645db5da8cb729593\transformed\transport-runtime-3.3.0\AndroidManifest.xml:32:13-37
 	android:name
 		ADDED from [com.google.android.datatransport:transport-runtime:3.3.0] C:\Users\bhara\.gradle\caches\8.11.1\transforms\e290cdab27b7d5c645db5da8cb729593\transformed\transport-runtime-3.3.0\AndroidManifest.xml:31:13-132
-meta-data#androidx.profileinstaller.ProfileInstallerInitializer
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
-	android:value
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
-receiver#androidx.profileinstaller.ProfileInstallReceiver
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
-	android:enabled
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
-	android:exported
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
-	android:permission
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
-	android:directBootAware
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
-intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
-action#androidx.profileinstaller.action.INSTALL_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
-intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
-action#androidx.profileinstaller.action.SKIP_FILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
-intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
-action#androidx.profileinstaller.action.SAVE_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
-intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
-action#androidx.profileinstaller.action.BENCHMARK_OPERATION
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\bhara\.gradle\caches\8.11.1\transforms\392b3b77b35443f38bd3600e871a855b\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92

@@ -49,6 +49,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -2428,6 +2429,7 @@ fun TabManagerOverlay(
     onShowHistory: () -> Unit,
     onShowMore: () -> Unit
 ) {
+    var showCloseAllDialog by remember { mutableStateOf(false) }
     val configuration = LocalConfiguration.current
     val compactCardWidth = (configuration.screenWidthDp.dp - 84.dp).coerceAtLeast(220.dp)
     val compactListState = rememberLazyListState(
@@ -2441,9 +2443,54 @@ fun TabManagerOverlay(
         }
     }
 
+    // Close-all confirmation dialog
+    if (showCloseAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showCloseAllDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text(
+                    "Close all tabs?",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    "This will close all ${tabs.size} open tabs. This action cannot be undone."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showCloseAllDialog = false
+                        onCloseAll()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Close all")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showCloseAllDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -2456,24 +2503,24 @@ fun TabManagerOverlay(
                 Text(
                     text = "Tabs",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Surface(
                     shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.16f)
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
                 ) {
                     Text(
                         text = "${tabs.size}",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 TextButton(onClick = onDone) {
-                    Text("Done", color = Color.White)
+                    Text("Done", color = MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -2578,7 +2625,6 @@ fun TabManagerOverlay(
                         .fillMaxWidth()
                         .navigationBarsPadding()
                         .padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onToggleViewMode) {
@@ -2588,13 +2634,15 @@ fun TabManagerOverlay(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    IconButton(onClick = onShowHistory) {
+                    Spacer(modifier = Modifier.weight(0.97f))
+                    IconButton(onClick = onShowHistory, modifier = Modifier.offset(x = (-4).dp)) {
                         Icon(
                             Icons.Default.History,
                             contentDescription = "History",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    Spacer(modifier = Modifier.weight(1.02f))
                     Surface(
                         modifier = Modifier.size(58.dp),
                         shape = CircleShape,
@@ -2614,12 +2662,15 @@ fun TabManagerOverlay(
                             )
                         }
                     }
-                    TextButton(onClick = onCloseAll) {
-                        Text(
-                            text = "Close all",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Spacer(modifier = Modifier.weight(1.02f))
+                    IconButton(onClick = { showCloseAllDialog = true }, modifier = Modifier.offset(x = 4.dp)) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Close all tabs",
+                            tint = MaterialTheme.colorScheme.error
                         )
                     }
+                    Spacer(modifier = Modifier.weight(0.97f))
                     IconButton(onClick = onShowMore) {
                         Icon(
                             Icons.Default.MoreVert,
@@ -2644,10 +2695,23 @@ private fun TabSwitcherPreviewCard(
     onClick: () -> Unit,
     onClose: () -> Unit
 ) {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val accentColor = if (isPrivate) Color(0xFF6C5CE7) else Orange500
-    val cardColor = if (isPrivate) Color(0xFF1E1B2A) else Color(0xFF232323)
-    val inactiveHeaderColor = if (isPrivate) Color(0xFF262236) else Color(0xFF2C2C2C)
-    val activeHeaderColor = if (isPrivate) Color(0xFF342A56) else Color(0xFF5A3C19)
+    val cardColor = if (isPrivate) {
+        if (isDark) Color(0xFF1E1B2A) else Color(0xFFF0EDF8)
+    } else {
+        if (isDark) Color(0xFF232323) else MaterialTheme.colorScheme.surfaceVariant
+    }
+    val inactiveHeaderColor = if (isPrivate) {
+        if (isDark) Color(0xFF262236) else Color(0xFFE8E0F4)
+    } else {
+        if (isDark) Color(0xFF2C2C2C) else MaterialTheme.colorScheme.surfaceVariant
+    }
+    val activeHeaderColor = if (isPrivate) {
+        if (isDark) Color(0xFF342A56) else Color(0xFFDDD0F0)
+    } else {
+        if (isDark) Color(0xFF5A3C19) else Orange500.copy(alpha = 0.12f)
+    }
     var dragOffsetY by remember(tab.id) { mutableFloatStateOf(0f) }
     var dragAlpha by remember(tab.id) { mutableFloatStateOf(1f) }
     var settleJob by remember(tab.id) { mutableStateOf<Job?>(null) }
@@ -2780,7 +2844,7 @@ private fun TabSwitcherPreviewCard(
             }
             .clickable { onClick() },
         shape = RoundedCornerShape(if (compact) 28.dp else 20.dp),
-        border = if (isActive) BorderStroke(2.dp, accentColor) else BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
+        border = if (isActive) BorderStroke(2.dp, accentColor) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)),
         color = cardColor,
         shadowElevation = if (isActive) 12.dp else 4.dp
     ) {
@@ -2874,7 +2938,7 @@ private fun TabSwitcherPreviewCard(
                                 .align(Alignment.BottomStart)
                                 .padding(10.dp),
                             shape = RoundedCornerShape(16.dp),
-                            color = Color.Black.copy(alpha = 0.55f)
+                            color = MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.65f)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -2890,7 +2954,7 @@ private fun TabSwitcherPreviewCard(
                                 Text(
                                     text = if (isPrivate) "Incognito tab" else if (isActive) "Current tab" else "Tap to open",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = Color.White
+                                    color = MaterialTheme.colorScheme.inverseOnSurface
                                 )
                             }
                         }

@@ -63,6 +63,9 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
 
+    // Baseline Profile — pre-compiles Compose animation paths at install time
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.5")
 
