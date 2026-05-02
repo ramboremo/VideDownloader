@@ -26,6 +26,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.cognitivechaos.xdownload.ui.files.DownloadFileActions
@@ -48,7 +50,7 @@ fun VideoPlayerScreen(
     var showMenu by remember { mutableStateOf(false) }
 
     // Fullscreen state
-    var isFullscreen by remember { mutableStateOf(false) }
+    var isFullscreen by remember { mutableStateOf(true) }
     val activity = context as? android.app.Activity
     val window = activity?.window
 
@@ -57,6 +59,20 @@ fun VideoPlayerScreen(
     // No separate lifecycle observer — release happens in onDispose when navigating away.
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build()
+    }
+
+    // Track video size via Player.Listener so we can pick the correct orientation
+    // when entering fullscreen (portrait vs. landscape).
+    var videoSize by remember { mutableStateOf(exoPlayer.videoSize) }
+    var manualOrientation by remember { mutableStateOf<Int?>(null) }
+    DisposableEffect(exoPlayer) {
+        val listener = object : Player.Listener {
+            override fun onVideoSizeChanged(size: VideoSize) {
+                videoSize = size
+            }
+        }
+        exoPlayer.addListener(listener)
+        onDispose { exoPlayer.removeListener(listener) }
     }
 
     // Bug fix #3: Use Uri.fromFile() instead of Uri.parse() for filesystem paths
@@ -76,17 +92,22 @@ fun VideoPlayerScreen(
     }
 
     // Manage fullscreen system UI — hide/show system bars and force landscape
-    LaunchedEffect(isFullscreen) {
+    LaunchedEffect(isFullscreen, manualOrientation, videoSize) {
         if (window != null && activity != null) {
             val controller = WindowCompat.getInsetsController(window, window.decorView)
             if (isFullscreen) {
                 controller.hide(WindowInsetsCompat.Type.systemBars())
                 controller.systemBarsBehavior =
                     WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                val defaultOrientation = if (videoSize.height > videoSize.width)
+                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                else
+                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                activity.requestedOrientation = manualOrientation ?: defaultOrientation
             } else {
                 controller.show(WindowInsetsCompat.Type.systemBars())
                 activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                manualOrientation = null // reset when exiting fullscreen
             }
         }
     }
@@ -239,6 +260,34 @@ fun VideoPlayerScreen(
                         },
                         modifier = Modifier.fillMaxSize()
                     )
+                    
+                    // Allow manual rotation in fullscreen via a small button
+                    if (isFullscreen) {
+                        IconButton(
+                            onClick = {
+                                val current = manualOrientation ?: if (videoSize.height > videoSize.width)
+                                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                                else
+                                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                                
+                                manualOrientation = if (current == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) {
+                                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                                } else {
+                                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                                }
+                            },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(24.dp)
+                                .background(Color.Black.copy(alpha = 0.4f), shape = androidx.compose.foundation.shape.CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh, 
+                                contentDescription = "Rotate Screen", 
+                                tint = Color.White
+                            )
+                        }
+                    }
                 }
             }
         }

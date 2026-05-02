@@ -3,6 +3,7 @@ package com.cognitivechaos.xdownload.ui.browser
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Handler
@@ -52,10 +53,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -141,6 +147,7 @@ fun BrowserScreen(
     val networkErrorDescription by viewModel.networkErrorDescription.collectAsState()
     val contextMenuTarget by viewModel.contextMenuTarget.collectAsState()
     val pendingGeneralDownload by viewModel.pendingGeneralDownload.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
 
     var urlInput by remember { mutableStateOf("") }
     var tabSwitcherListMode by remember { mutableStateOf(false) }
@@ -316,9 +323,9 @@ fun BrowserScreen(
             contextMenuTarget != null -> viewModel.dismissContextMenu()
             pendingGeneralDownload != null -> viewModel.dismissGeneralDownload()
             showQualitySheet -> viewModel.dismissQualitySheet()
-            showTabManager -> viewModel.dismissTabManager()
-            showBookmarks -> viewModel.dismissBookmarks()
             showHistory -> viewModel.dismissHistory()
+            showBookmarks -> viewModel.dismissBookmarks()
+            showTabManager -> viewModel.dismissTabManager()
             activeWv?.url == INTERNAL_BLANK_URL -> {
                 activeWv.clearHistory()
                 urlInput = ""
@@ -1116,16 +1123,21 @@ fun BrowserScreen(
                     refreshTabPreviewsForSwitcher()
                     newestTabId = viewModel.tabs.value.lastOrNull()?.id
                 },
+                onAddIncognitoTab = {
+                    viewModel.addIncognitoTab()
+                    refreshTabPreviewsForSwitcher()
+                    newestTabId = viewModel.tabs.value.lastOrNull()?.id
+                },
                 onDone = { viewModel.dismissTabManager() },
                 onToggleViewMode = { tabSwitcherListMode = !tabSwitcherListMode },
                 onShowHistory = {
-                    viewModel.dismissTabManager()
                     viewModel.showHistory()
                 },
-                onShowMore = {
-                    viewModel.dismissTabManager()
-                    viewModel.toggleMenu()
-                }
+                isDarkMode = themeMode == "Dark",
+                onToggleDarkMode = { viewModel.toggleDarkMode() },
+                onNavigateToSettings = {
+                    onNavigateToSettings()
+                },
             )
         }
 
@@ -1135,6 +1147,7 @@ fun BrowserScreen(
                 history = history,
                 onHistoryItemClick = { item ->
                     viewModel.dismissHistory()
+                    viewModel.dismissTabManager()
                     urlInput = item.url
                     viewModel.navigateTo(item.url)
                 },
@@ -2412,6 +2425,21 @@ fun QualityPickerSheet(
     }
 }
 
+// Pure helper functions for incognito gesture — extracted for unit testability (no Compose runtime needed)
+
+/**
+ * Returns true if the point (dx, dy) in dp is within the circular hit target of the given radius.
+ * Feature: incognito-tab-gesture, Property 1: Hit-target detection is a pure geometric predicate
+ */
+fun isInHitTarget(dx: Float, dy: Float, radiusDp: Float = 34f): Boolean =
+    kotlin.math.sqrt(dx * dx + dy * dy) <= radiusDp
+
+/**
+ * Returns the target scale for the incognito button based on whether the finger is over it.
+ * Feature: incognito-tab-gesture, Property 2: Hover scale tracks isOverTarget
+ */
+fun computeHoverScaleTarget(isOverTarget: Boolean): Float = if (isOverTarget) 1.12f else 1.0f
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TabManagerOverlay(
@@ -2424,18 +2452,35 @@ fun TabManagerOverlay(
     onCloseTab: (Int) -> Unit,
     onCloseAll: () -> Unit,
     onAddTab: () -> Unit,
+    onAddIncognitoTab: () -> Unit,
     onDone: () -> Unit,
     onToggleViewMode: () -> Unit,
     onShowHistory: () -> Unit,
-    onShowMore: () -> Unit
+    isDarkMode: Boolean,
+    onToggleDarkMode: () -> Unit,
+    onNavigateToSettings: () -> Unit,
 ) {
     var showCloseAllDialog by remember { mutableStateOf(false) }
+    var showMoreMenu by remember { mutableStateOf(false) }
     val configuration = LocalConfiguration.current
     val compactCardWidth = (configuration.screenWidthDp.dp - 84.dp).coerceAtLeast(220.dp)
     val compactListState = rememberLazyListState(
         initialFirstVisibleItemIndex = activeTabIndex.coerceIn(0, tabs.lastIndex.coerceAtLeast(0))
     )
     val compactFlingBehavior = rememberSnapFlingBehavior(lazyListState = compactListState)
+
+    // Incognito gesture animation state (Tasks 4, 6)
+    val incognitoScale   = remember { Animatable(0f) }
+    val incognitoAlpha   = remember { Animatable(0f) }
+    val incognitoOffsetY = remember { Animatable(0f) }   // dp, negative = upward
+    val plusScale        = remember { Animatable(1f) }
+    var isOverTarget     by remember { mutableStateOf(false) }
+    // Track the plus button's center position in root coordinates so the
+    // incognito popup (rendered in the root Box) aligns perfectly above it.
+    var plusButtonCenterInRoot by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    val coroutineScopeGesture = rememberCoroutineScope()
+    val hapticFeedback = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
 
     LaunchedEffect(activeTabIndex, tabs.size, isListMode) {
         if (!isListMode && tabs.isNotEmpty()) {
@@ -2487,6 +2532,7 @@ fun TabManagerOverlay(
         )
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -2643,24 +2689,188 @@ fun TabManagerOverlay(
                         )
                     }
                     Spacer(modifier = Modifier.weight(1.02f))
-                    Surface(
-                        modifier = Modifier.size(58.dp),
-                        shape = CircleShape,
-                        color = Orange500
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clickable(onClick = onAddTab),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = "Add tab",
-                                tint = Color.White,
-                                modifier = Modifier.size(28.dp)
+                    // Plus button wrapped in a Box; incognito popup is rendered in the root Box (see below)
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.onGloballyPositioned { coords ->
+                            val pos = coords.positionInRoot()
+                            plusButtonCenterInRoot = androidx.compose.ui.geometry.Offset(
+                                x = pos.x + coords.size.width / 2f,
+                                y = pos.y + coords.size.height / 2f
                             )
                         }
+                    ) {
+                        // Plus button — graphicsLayer driven by plusScale Animatable
+                        Surface(
+                            modifier = Modifier
+                                .size(58.dp)
+                                .graphicsLayer {
+                                    scaleX = plusScale.value
+                                    scaleY = plusScale.value
+                                },
+                            shape = CircleShape,
+                            color = Orange500
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .semantics {
+                                        contentDescription = "New tab — long press for incognito"
+                                    }
+                                    .pointerInput(Unit) {
+                                        // Manual long-press + drag gesture controller.
+                                        // We do NOT use detectTapGestures because it doesn't
+                                        // support drag tracking after a long-press fires.
+                                        val longPressThresholdMs = 500L
+                                        val moveCancelThresholdPx = with(density) { 10.dp.toPx() }
+                                        // Incognito button center is 72dp above the plus button center
+                                        val incognitoOffsetYPx = with(density) { 72.dp.toPx() }
+                                        val hitTargetRadiusPx = with(density) { 34.dp.toPx() }
+
+                                        coroutineScope {
+                                            while (true) {
+                                                // Wait for a finger down
+                                                val down = awaitPointerEventScope { awaitFirstDown(requireUnconsumed = false) }
+                                                val startPos = down.position
+                                                var longPressTriggered = false
+
+                                                // Launch the 500ms long-press timer
+                                                val timerJob = launch {
+                                                    delay(longPressThresholdMs)
+                                                    longPressTriggered = true
+                                                    // Haptic feedback at the moment the threshold is crossed
+                                                    hapticFeedback.performHapticFeedback(
+                                                        androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress
+                                                    )
+                                                    // Pop-out animation: incognito button springs upward
+                                                    launch {
+                                                        incognitoOffsetY.animateTo(
+                                                            -72f,
+                                                            spring(dampingRatio = 0.55f, stiffness = 380f)
+                                                        )
+                                                    }
+                                                    launch {
+                                                        incognitoScale.animateTo(
+                                                            1f,
+                                                            spring(dampingRatio = 0.55f, stiffness = 380f)
+                                                        )
+                                                    }
+                                                    launch {
+                                                        incognitoAlpha.animateTo(
+                                                            1f,
+                                                            tween(220, easing = FastOutSlowInEasing)
+                                                        )
+                                                    }
+                                                    launch {
+                                                        plusScale.animateTo(0.88f, tween(180))
+                                                    }
+                                                }
+
+                                                // Poll pointer events until the finger lifts
+                                                var releaseOverTarget = false
+                                                awaitPointerEventScope {
+                                                    while (true) {
+                                                        val event = awaitPointerEvent()
+                                                        val pointer = event.changes.firstOrNull() ?: break
+
+                                                        if (!longPressTriggered) {
+                                                            // Check for movement that cancels long-press
+                                                            val delta = pointer.position - startPos
+                                                            val dist = kotlin.math.sqrt(
+                                                                delta.x * delta.x + delta.y * delta.y
+                                                            )
+                                                            if (dist > moveCancelThresholdPx) {
+                                                                timerJob.cancel()
+                                                                break
+                                                            }
+                                                        } else {
+                                                            // Drag tracking: compute offset from incognito button center.
+                                                            // The incognito button center is 72dp ABOVE the plus button center,
+                                                            // so its y-coordinate in the plus button's local space is:
+                                                            //   plusCenter.y - incognitoOffsetYPx
+                                                            val dx = pointer.position.x - (size.width / 2f)
+                                                            val dy = pointer.position.y - (size.height / 2f - incognitoOffsetYPx)
+                                                            val distToTarget = kotlin.math.sqrt(dx * dx + dy * dy)
+                                                            val nowOverTarget = distToTarget <= hitTargetRadiusPx
+                                                            if (nowOverTarget != isOverTarget) {
+                                                                isOverTarget = nowOverTarget
+                                                                // Hover scale feedback
+                                                                coroutineScopeGesture.launch {
+                                                                    if (nowOverTarget) {
+                                                                        incognitoScale.animateTo(
+                                                                            1.12f,
+                                                                            spring(dampingRatio = 0.4f, stiffness = 500f)
+                                                                        )
+                                                                    } else {
+                                                                        incognitoScale.animateTo(
+                                                                            1f,
+                                                                            spring(dampingRatio = 0.6f, stiffness = 400f)
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+
+                                                        // Finger lifted
+                                                        if (!pointer.pressed) {
+                                                            releaseOverTarget = isOverTarget
+                                                            break
+                                                        }
+                                                    }
+                                                }
+
+                                                if (!longPressTriggered) {
+                                                    // Short press — normal add tab
+                                                    timerJob.cancel()
+                                                    onAddTab()
+                                                } else {
+                                                    // Long press completed — success or cancel
+                                                    if (releaseOverTarget) {
+                                                        onAddIncognitoTab()
+                                                    }
+                                                    // Dismiss animation regardless of outcome
+                                                    coroutineScopeGesture.launch {
+                                                        // Run all dismiss animations in parallel, then reset state
+                                                        val j1 = launch {
+                                                            incognitoOffsetY.animateTo(
+                                                                0f,
+                                                                spring(dampingRatio = 0.7f, stiffness = 500f)
+                                                            )
+                                                        }
+                                                        val j2 = launch {
+                                                            incognitoScale.animateTo(
+                                                                0f,
+                                                                spring(dampingRatio = 0.7f, stiffness = 500f)
+                                                            )
+                                                        }
+                                                        val j3 = launch {
+                                                            incognitoAlpha.animateTo(
+                                                                0f,
+                                                                tween(180, easing = FastOutSlowInEasing)
+                                                            )
+                                                        }
+                                                        val j4 = launch {
+                                                            plusScale.animateTo(1f, tween(200))
+                                                        }
+                                                        // Wait for all animations to finish before resetting state
+                                                        j1.join(); j2.join(); j3.join(); j4.join()
+                                                        isOverTarget = false
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+
                     }
                     Spacer(modifier = Modifier.weight(1.02f))
                     IconButton(onClick = { showCloseAllDialog = true }, modifier = Modifier.offset(x = 4.dp)) {
@@ -2671,17 +2881,108 @@ fun TabManagerOverlay(
                         )
                     }
                     Spacer(modifier = Modifier.weight(0.97f))
-                    IconButton(onClick = onShowMore) {
-                        Icon(
-                            Icons.Default.MoreVert,
-                            contentDescription = "More",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Box {
+                        IconButton(onClick = { showMoreMenu = true }) {
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = "More",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMoreMenu,
+                            onDismissRequest = { showMoreMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("History") },
+                                leadingIcon = { Icon(Icons.Default.History, null) },
+                                onClick = {
+                                    showMoreMenu = false
+                                    onShowHistory()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(if (isDarkMode) "Light Mode" else "Dark Mode") },
+                                leadingIcon = {
+                                    Icon(
+                                        if (isDarkMode) Icons.Default.WbSunny else Icons.Default.NightsStay,
+                                        null
+                                    )
+                                },
+                                onClick = {
+                                    showMoreMenu = false
+                                    onToggleDarkMode()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("New Private Tab") },
+                                leadingIcon = { Icon(Icons.Default.VisibilityOff, null) },
+                                onClick = {
+                                    showMoreMenu = false
+                                    onAddIncognitoTab()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Settings") },
+                                leadingIcon = { Icon(Icons.Default.Settings, null) },
+                                onClick = {
+                                    showMoreMenu = false
+                                    onNavigateToSettings()
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
     }
+
+        // Incognito button — rendered in the OUTER Box (no systemBarsPadding) so it
+        // is NOT clipped by the bottom bar Surface.  positionInRoot() coordinates
+        // map directly to offset values since this Box starts at (0,0) in root space.
+        if (plusButtonCenterInRoot != androidx.compose.ui.geometry.Offset.Zero) {
+            val incognitoBtnSizeDp = 58.dp
+            val incognitoBtnSizePx = with(density) { incognitoBtnSizeDp.toPx() }
+            Surface(
+                modifier = Modifier
+                    .size(incognitoBtnSizeDp)
+                    .offset {
+                        val offsetYPx = incognitoOffsetY.value.dp.toPx()
+                        androidx.compose.ui.unit.IntOffset(
+                            x = (plusButtonCenterInRoot.x - incognitoBtnSizePx / 2f).toInt(),
+                            y = (plusButtonCenterInRoot.y - incognitoBtnSizePx / 2f + offsetYPx).toInt()
+                        )
+                    }
+                    .graphicsLayer {
+                        scaleX = incognitoScale.value
+                        scaleY = incognitoScale.value
+                        alpha = incognitoAlpha.value
+                    },
+                shape = CircleShape,
+                color = Color(0xFF6C5CE7),
+                shadowElevation = 14.dp
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .semantics {
+                            onClick(label = "Open incognito tab") {
+                                onAddIncognitoTab()
+                                true
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.VisibilityOff,
+                        contentDescription = "Open incognito tab",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+        }
+    }  // outer Box
 }
 
 @Composable

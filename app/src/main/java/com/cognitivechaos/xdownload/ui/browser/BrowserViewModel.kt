@@ -181,6 +181,8 @@ class BrowserViewModel @Inject constructor(
     // Preferences
     val blockAds = preferences.blockAds.stateIn(viewModelScope, SharingStarted.Lazily, true)
     val searchEngine = preferences.searchEngine.stateIn(viewModelScope, SharingStarted.Lazily, "Google")
+    val themeMode = preferences.themeMode
+        .stateIn(viewModelScope, SharingStarted.Lazily, "System")
 
     val hasActiveDownloads = downloadDao.getDownloadsByStatus("DOWNLOADING")
         .map { it.isNotEmpty() }
@@ -517,6 +519,18 @@ class BrowserViewModel @Inject constructor(
         _currentTitle.value = "New Tab"
     }
 
+    fun addIncognitoTab() {
+        clearPageError()
+        _isIncognito.value = true
+        videoDetector.clearDetectedMedia()
+        val newTab = BrowserTab(isActive = true, isIncognito = true)
+        val updatedTabs = _tabs.value.map { it.copy(isActive = false) } + newTab
+        _tabs.value = updatedTabs
+        _activeTabIndex.value = updatedTabs.size - 1
+        _currentUrl.value = ""
+        _currentTitle.value = "Incognito"
+    }
+
     fun switchToTab(index: Int) {
         clearPageError()
         if (index in _tabs.value.indices) {
@@ -649,6 +663,16 @@ class BrowserViewModel @Inject constructor(
     // Menu
     fun toggleMenu() { _showMenu.value = !_showMenu.value }
     fun dismissMenu() { _showMenu.value = false }
+
+    fun toggleDarkMode() {
+        viewModelScope.launch {
+            val next = when (themeMode.value) {
+                "Dark" -> "Light"
+                else   -> "Dark"
+            }
+            preferences.setThemeMode(next)
+        }
+    }
 
     // Tab Manager
     fun showTabManager() { _showTabManager.value = true }
